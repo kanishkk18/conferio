@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@zegocloud/zego-uikit-prebuilt": "^2.6.0",
+    "express": "^4.19.2",
+    "nodemon": "^3.1.4",
+    "react-router-dom": "^6.23.1",
+    "socket.io": "^4.7.5"
+  }
+}

@@ -1,0 +1,152 @@
+.login-logo{
+    height: 40px;
+    width: 40px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.login-container {
+    display: flex;
+    width: auto;
+    height: 100vh;
+    background: #111111;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    margin-left: 10px;
+    margin-right: 10px;
+    overflow: hidden;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-left {
+    background: url('https://res.cloudinary.com/dtl8hxhde/image/upload/v1719941109/CONFERIO/jsgjabidlrrd79stwhbb.jpg') no-repeat center center/cover;
+    color: rgb(6, 51, 253);
+    padding: 40px;
+    flex: 2;
+  border-radius: 20px;
+    background-size: cover;
+
+}
+
+.login-left h1 {
+    margin-top: 320px;
+    font-weight: 600;
+    font-size: 45px;
+    line-height: 1em;
+    align-items: center;
+    text-align: center;
+}
+
+.login-right {
+    flex: 1;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.login-right h1 {
+    
+    font-size: 30px;
+    text-align: center;
+    color: white;
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    width:98%;
+    justify-content: center;
+    margin-left: auto;
+    align-items: center;
+    margin-right: auto;
+}
+
+
+.login-input{
+    padding: 13px;
+    width: 92%;
+    margin-bottom: 20px;
+    border: 2px solid #ffffff;
+    border-radius: 14px;
+    background-color: rgba(24, 23, 23, 0.459);
+}
+
+
+
+.submit-button {
+    padding: 13px;
+    width: 100%;
+    border: none;
+    border-radius: 14px;
+    background: rgb(255, 255, 255);
+    color: rgb(0, 0, 0);
+    cursor: pointer;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.submit-button:hover {
+    background: #000000;
+    color: white;
+    transition: all .5s ease-in;
+}
+
+.google-signin {
+    text-align: center;
+    width: 100%;
+}
+
+.separation-signin{
+    position: relative;
+    display: flex;
+    margin-top:20px;
+    margin-bottom: 10px;
+  }
+  
+  .or{
+    color: rgb(115, 115, 115);
+    font-size: 13px;
+    font-style: normal;
+    font-weight: 600;
+    position: relative;
+    margin-top: -9px;
+    padding: 0px 5px 0px 5px;
+  }
+  
+  .line{
+    height: 1px;
+    width: 13vw;
+    background-color:#aaa9a9;
+    position: relative;
+    display: flex;
+    margin-bottom: 20px;
+  }
+  
+  .line1{
+    height: 1px;
+    width: 13vw;
+    background-color: #b1b0b0;
+    position: relative;
+    display: flex;
+    margin-bottom: 20px;
+  }
+
+.google-signin .google-btn {
+    background: transparent;
+    color: rgb(255, 255, 255);
+    border: 1.5px solid #818181;
+    width: 100%;
+    border-radius: 14px;
+    padding: 13px;
+    margin-bottom: 10px;
+}
+.google-btn:hover{
+    background: #ffffff;
+    color: rgb(0, 0, 0);
+    transition: all .5s ease-in;
+}
+
