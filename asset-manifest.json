@@ -1,0 +1,20 @@
+{
+  "files": {
+    "main.css": "/conferio/static/css/main.5fd6df51.css",
+    "main.js": "/conferio/static/js/main.02875c13.js",
+    "static/js/453.3e09bd0f.chunk.js": "/conferio/static/js/453.3e09bd0f.chunk.js",
+    "static/media/herologo.mp4": "/conferio/static/media/herologo.3d68b13bfe775a392a8d.mp4",
+    "static/media/laptop.png": "/conferio/static/media/laptop.f4d900eb35d8dac8b723.png",
+    "static/media/secure.svg": "/conferio/static/media/secure.9720763f5476b8c78e75a26fba74cebb.svg",
+    "static/media/tick.svg": "/conferio/static/media/tick.a077169f939f78fc587c90debfbf5a85.svg",
+    "static/media/rightarrow.svg": "/conferio/static/media/rightarrow.60cb99bd136b632c1cd661bdd7a87dcc.svg",
+    "index.html": "/conferio/index.html",
+    "main.5fd6df51.css.map": "/conferio/static/css/main.5fd6df51.css.map",
+    "main.02875c13.js.map": "/conferio/static/js/main.02875c13.js.map",
+    "453.3e09bd0f.chunk.js.map": "/conferio/static/js/453.3e09bd0f.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.5fd6df51.css",
+    "static/js/main.02875c13.js"
+  ]
+}
