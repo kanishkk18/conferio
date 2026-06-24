@@ -1,0 +1,33 @@
+/* styles/whiteboard.css */
+/* Import in _app.tsx or the whiteboard page layout */
+
+/* tldraw's CSS must be imported globally */
+/* @import "tldraw/tldraw.css"; */
+
+/* .tl-background {
+  background-color: #0f0f0f !important;
+}
+
+.tlui-layout__top,
+.tlui-layout__bottom,
+.tlui-navigation-zone,
+.tlui-style-panel,
+.tlui-toolbar,
+.tlui-menu-zone {
+  display: none !important;
+}
+
+.tl-debug-panel {
+  display: none !important;
+}
+
+.tl-collaborator__cursor {
+  z-index: 300;
+}
+
+@media (max-width: 767px) {
+  .tl-canvas {
+    touch-action: none;
+  }
+} */
+

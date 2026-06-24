@@ -1,0 +1,168 @@
+'use client'
+
+import { useState } from "react"
+import { Button } from "../ui/button"
+import { Modal, 
+         ModalBody, 
+         ModalContent, 
+         ModalDescription, 
+         ModalFooter, 
+         ModalHeader, 
+         ModalTitle, 
+         ModalTrigger } from "../ui/animated-modal"
+
+import { Input } from "../ui/input"
+import { Label } from "../ui/label"
+import ColorPicker from "./color-picker/color-picker"
+import EmojiPicker from 'emoji-picker-react'
+// import './color-picker/color-picker.css'
+import Loading from "../common/loading"
+import { Plus } from "lucide-react"
+import Category from "interfaces/category";
+
+const isColorLight = (hexColor: string) => {
+  const r = parseInt(hexColor.substr(1, 2), 16);
+  const g = parseInt(hexColor.substr(3, 2), 16);
+  const b = parseInt(hexColor.substr(5, 2), 16);
+  const luminosity = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luminosity > 128;
+};
+
+interface CategoryFormProps {
+  setCategory: React.Dispatch<React.SetStateAction<Category | null>>;
+}
+
+export function CategoryForm({ setCategory }: CategoryFormProps) {
+  const [name, setName] = useState("work");
+  const [color, setColor] = useState("#2647eb");
+  const [icon, setIcon] = useState("💼");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const textColor = isColorLight(color) ? "text-black" : "text-white";
+
+  const handleNewCategory = async () => {
+    setIsModalOpen(false);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/category", {
+        method: "POST",
+        body: JSON.stringify({ name, color, icon }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const newCategory = await response.json();
+
+        setCategory((prevCategories) => [
+          ...(prevCategories || []),
+          newCategory,
+        ]);
+      }
+    } catch (error) {
+      console.error("Error creating new category:", error);
+    }
+    setIsLoading(false);
+  };
+
+  const handleColorChange = (newColor: string) => {
+    setColor(newColor);
+  };
+
+  const handleEmojiSelect = (emojiData: { emoji: string }) => {
+    setIcon(emojiData.emoji);
+    setShowEmojiPicker(false);
+  };
+
+  return (
+    <div>
+      <Loading isLoading={isLoading} />
+
+      <Modal open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <ModalTrigger>
+          <Button
+            variant="outline"
+            className="w-fit px-1.5 !py-1 h-fit justify-start text-left font-medium shadow-none dark:bg-[#111111] overflow-hidden text-xs"
+          >
+            <Plus />
+           Category
+          </Button>
+        </ModalTrigger>
+<ModalBody>
+        <ModalContent className="sm:max-w-[430px] -ml-1.5">
+          <ModalHeader>
+            <ModalTitle>Reminder Category</ModalTitle>
+            <ModalDescription>
+              Create your new Reminder Category here.
+            </ModalDescription>
+          </ModalHeader>
+          <div className="grid gap-4 py-4 px-8">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input
+                required
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="color" className="text-right">
+                Color
+              </Label>
+              <ColorPicker 
+                id="color"
+                value={color}
+                onChange={handleColorChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="icon" className="text-right">
+                Icon
+              </Label>
+              <div className="col-span-3 flex items-center gap-x-2">
+                <Input
+                  id="icon"
+                  value={icon}
+                  readOnly
+                  placeholder="Select an emoji"
+                  className="w-20 text-center"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                >
+                  Pick Emoji
+                </Button>
+              </div>
+            </div>
+            {showEmojiPicker && (
+              <div className="mt-2">
+                <EmojiPicker onEmojiClick={handleEmojiSelect} />
+              </div>
+            )}
+          </div>
+          
+        </ModalContent>
+        <ModalFooter>
+            <Button
+              className={`${textColor}`}
+              style={{ backgroundColor: color }}
+              type="submit"
+              onClick={handleNewCategory}
+            >
+              {icon} Save
+            </Button>
+          </ModalFooter>
+        </ModalBody>
+      </Modal>
+    </div>
+  );
+}

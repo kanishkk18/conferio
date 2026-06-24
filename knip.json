@@ -1,0 +1,46 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "next.config.{js,ts,mjs}",
+    "pages/_app.tsx",
+    "pages/_document.tsx",
+    "pages/api/**/*.ts",
+    "pages/**/*.tsx",
+    "middleware.ts",
+    "lib/db.ts"
+  ],
+  "project": [
+    "components/**/*.{ts,tsx}",
+    "hooks/**/*.{ts,tsx}",
+    "contexts/**/*.{ts,tsx}",
+    "lib/**/*.{ts,tsx}",
+    "utils/**/*.{ts,tsx}",
+    "types/**/*.{ts,tsx}",
+    "styles/**/*.css"
+  ],
+  "ignore": [
+    "**/*.test.{ts,tsx}",
+    "**/*.spec.{ts,tsx}",
+    "**/*.d.ts",
+    "prisma/seed.ts",
+    "public/**",
+    ".next/**",
+    "dist/**",
+    "node_modules/**"
+  ],
+  "ignoreDependencies": [
+    "@types/*",
+    "typescript",
+    "tailwindcss",
+    "postcss",
+    "autoprefixer",
+    "prisma",
+    "@prisma/client",
+    "eslint",
+    "prettier",
+    "next",
+    "react",
+    "react-dom"
+  ],
+  "ignoreBinaries": ["ts-node"]
+}

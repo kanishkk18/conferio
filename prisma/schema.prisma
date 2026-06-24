@@ -1,0 +1,2516 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  OWNER
+  MEMBER
+  CLIENT
+  MANAGER
+  INTERN
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model User {
+  id                     String        @id @default(uuid())
+  name                   String
+  email                  String        @unique
+  emailVerified          DateTime?
+  password               String?
+  image                  String?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  invalid_login_attempts Int           @default(0)
+  lockedAt               DateTime?
+  accounts               Account[]
+  invitations            Invitation[]
+  sessions               Session[]
+  teamMembers            TeamMember[]
+  category               Category[]
+  myTasks                MyTask[]
+  events                 Event[]
+  integrations           Integration[]
+  availability           Availability?
+  meetings               Meeting[]
+  aiMeetings             AiMeeting[]
+  chatMessages           ChatMessage[]
+  meetingAttendees       MeetingAttendee[]
+  username               String?       @unique
+  imageUrl               String?
+  files                  File[]
+  docFiles               DocFile[]
+  servers                Server[]
+  members                Member[]
+  channels               Channel[]
+  clips                  Clip[]
+  memberships            WorkspaceMembership[]
+  pagesnts               Comment[]
+  pageVersions           PageVersion[]
+  shares                 Page[]
+  comme                  Share[]
+  ownedBoards            Board[]   @relation("BoardOwner")
+  memberBoards           BoardMember[]
+  assignedTasks          TaskAssignee[]
+  boardComments          BoardComment[]
+  activities             ActivityLog[]
+  sentInvites            BoardInvite[] @relation("InviteSender")
+  attachments            Attachment[]
+  assignedFiles          FileAssignment[]
+  folders                Folder[]
+  storage                Storage?
+  timeEntries            TimeEntry[]      @relation("UserTimeEntries")
+  approvedTimeEntries    TimeEntry[]      @relation("TimeEntryApprover")
+  manualTimeRequests     ManualTimeRequest[]
+  callsInitiated         Call[] @relation("Caller")
+  callsReceived          Call[] @relation("Callee")
+  callRecordings         CallRecording[]
+  callParticipants       CallParticipant[]
+  aiSessions             AIAgentSession[]
+  voiceCommands          VoiceCommand[]
+  reminders              Reminder[]
+  favoritePages          PageFavorite[]
+  notifications          Notification[]
+  notificationPreference NotificationPreference?
+  videoMeetingsCreated   VideoMeeting[]              @relation("VideoMeetingCreator")
+  videoMeetingParticipations   VideoMeetingParticipant[]   @relation("VideoMeetingParticipants")
+  notes                  Note[]
+  noteFavorites          NoteFavorite[]
+  noteVersions           NoteVersion[]
+  noteShares             NoteShare[]
+  noteFiles              NoteFile[]
+  messageBookmarks       MessageBookmark[]
+  scheduledEmails        ScheduledEmail[]
+  hostedConferences      VideoConference[]         @relation("VideoConferenceHost")
+  vmParticipations       VMParticipant[]           @relation("VMParticipants")  
+  vmWaitingEntries       VMWaitingEntry[]
+  roomsCreated           Room[]   @relation("RoomCreator")
+  uploadedTrack          MusicTrack[]
+  playlists              Playlist[]
+  favourites             MusicFavourite[]
+  directMessageReactions TeamDirectMessageReaction[]
+  directMessageBookmarks TeamDirectMessageBookmark[]
+  voiceAgentSessions     VoiceAgentSession[]
+  voiceReminders         VoiceAgentReminder[]
+  voiceSettings          UserVoiceSettings?
+  musicFavorites         MusicFavorite[]
+  musicPlaylists         MusicPlaylist[]
+  recentlyPlayed         RecentlyPlayed[]
+  musicPreferences       UserMusicPreferences?
+  uploadedTracks         UploadedTrack[]
+  routeViewSessions      RouteViewSession[]
+  routeViewAggregates    RouteViewAggregate[]
+}
+
+model Team {
+  id              String       @id @default(uuid())
+  name            String
+  slug            String       @unique
+  domain          String?      @unique
+  defaultRole     Role         @default(MEMBER)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @default(now())
+  billingId       String?
+  billingProvider String?
+  apiKeys         ApiKey[]
+  invitations     Invitation[]
+  members         TeamMember[]
+  meetingLinks    TeamMeetingLink[]
+  files           File[]
+  folders         Folder[]
+  teamStorage     TeamStorage?
+  conversations   TeamConversation[]
+  timeEntries     TimeEntry[]
+  manualTimeRequests   ManualTimeRequest[]
+  pages           Page[] 
+  screenShareSessions ScreenShareSession[]
+  rooms           Room[]
+  routeViewSessions    RouteViewSession[]
+  routeViewAggregates  RouteViewAggregate[]
+
+  @@index([billingId])
+}
+
+model TeamMember {
+  id        String   @id @default(uuid())
+  teamId    String
+  userId    String
+  role      Role     @default(MEMBER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversationsInitiated TeamConversation[] @relation("ParticipantOne")
+  conversationsReceived  TeamConversation[] @relation("ParticipantTwo")
+  teamDirectMessages     TeamDirectMessage[]
+  assignedPages Page[] @relation("AssignedPages")
+
+  @@unique([teamId, userId])
+  @@index([userId])
+}
+
+
+model Invitation {
+  id             String   @id @default(uuid())
+  teamId         String
+  email          String?
+  role           Role     @default(MEMBER)
+  token          String   @unique
+  expires        DateTime
+  invitedBy      String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
+  allowedDomains String[] @default([])
+  sentViaEmail   Boolean  @default(true)
+  user           User     @relation(fields: [invitedBy], references: [id], onDelete: Cascade)
+  team           Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, email])
+  @@index([email])
+}
+
+model PasswordReset {
+  id        Int      @id @default(autoincrement())
+  email     String
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime
+}
+
+model ApiKey {
+  id         String    @id @default(uuid())
+  name       String
+  teamId     String
+  hashedKey  String    @unique
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now())
+  expiresAt  DateTime?
+  lastUsedAt DateTime?
+  team       Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+}
+
+model Subscription {
+  id         String    @id
+  customerId String
+  priceId    String
+  active     Boolean   @default(false)
+  startDate  DateTime
+  endDate    DateTime
+  cancelAt   DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now())
+
+  @@index([customerId])
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  description String
+  features    String[]
+  image       String
+  name        String
+  created     DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  Price       Price[]
+}
+
+model Price {
+  id            String   @id @default(uuid())
+  billingScheme String
+  currency      String
+  serviceId     String
+  amount        Int?
+  metadata      Json
+  type          String
+  created       DateTime
+  service       Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+}
+
+model jackson_store {
+  key           String          @id(map: "_jackson_store_key") @db.VarChar(1500)
+  value         String
+  iv            String?         @db.VarChar(64)
+  tag           String?         @db.VarChar(64)
+  createdAt     DateTime        @default(now()) @db.Timestamp(6)
+  modifiedAt    DateTime?       @db.Timestamp(6)
+  namespace     String?         @db.VarChar(256)
+  jackson_index jackson_index[]
+
+  @@index([namespace], map: "_jackson_store_namespace")
+  @@ignore
+}
+
+model jackson_index {
+  id       Int           @id(map: "_jackson_index_id") @default(autoincrement())
+  key      String        @db.VarChar(1500)
+  storeKey String        @db.VarChar(1500)
+  store    jackson_store @relation(fields: [storeKey], references: [key], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([key], map: "_jackson_index_key")
+  @@index([key, storeKey], map: "_jackson_index_key_store")
+  @@ignore
+}
+
+model jackson_ttl {
+  key       String @id(map: "jackson_ttl_key") @db.VarChar(1500)
+  expiresAt BigInt
+
+  @@index([expiresAt], map: "_jackson_ttl_expires_at")
+  @@ignore
+}
+
+model Board {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  coverImage  String?
+  coverImageKey String?
+  isArchived  Boolean  @default(false)
+  
+  // Relations
+  ownerId     String
+  owner       User    @relation("BoardOwner", fields: [ownerId], references: [id])
+  members     BoardMember[]
+  columns     Column[] @relation("BoardColumns")
+  labels      Label[]
+  activities  ActivityLog[]
+  invites     BoardInvite[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([ownerId])
+}
+
+model BoardMember {
+  id     String @id @default(cuid())
+  role   BoardRole @default(MEMBER)
+  
+  boardId String
+  board   Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+
+  @@unique([boardId, userId])
+  @@index([boardId])
+  @@index([userId])
+}
+
+enum BoardRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+model Column {
+  id    String @id @default(cuid())
+  title String
+  color String?
+  order Int    @default(0)
+  
+  boardId String
+  board   Board  @relation("BoardColumns", fields: [boardId], references: [id], onDelete: Cascade)
+  tasks   Task[] @relation("ColumnTasks")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([boardId])
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?   @db.Text
+  coverImage  String?
+  status      TaskStatus @default(TODO)
+  priority    Priority   @default(MEDIUM)
+  dueDate     DateTime?
+  order       Int       @default(0)
+  isArchived  Boolean   @default(false)
+  
+  // Relations
+  columnId    String
+  column      Column    @relation("ColumnTasks", fields: [columnId], references: [id], onDelete: Cascade)
+  boardId     String
+  
+  subtasks    Subtask[]
+  attachments Attachment[]
+  boardComments    BoardComment[]
+  assignees   TaskAssignee[]
+  labels      TaskLabel[]
+  activities  ActivityLog[]
+  timeEntries TimeEntry[]
+  reminders   Reminder[]
+  notifications Notification[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([columnId])
+  @@index([boardId])
+  @@index([status])
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Subtask {
+  id          String @id @default(cuid())
+  title       String
+  isCompleted Boolean @default(false)
+  order       Int     @default(0)
+  
+  taskId      String
+  task        Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([taskId])
+}
+
+model TaskAssignee {
+  id     String @id @default(cuid())
+  
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  assignedAt DateTime @default(now())
+  assignedBy String?
+
+  @@unique([taskId, userId])
+  @@index([taskId])
+  @@index([userId])
+}
+
+model Label {
+  id    String @id @default(cuid())
+  name  String
+  color String @default("#3b82f6")
+  
+  boardId String
+  board   Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  tasks   TaskLabel[]
+  
+  createdAt DateTime @default(now())
+
+  @@index([boardId])
+}
+
+model TaskLabel {
+  id String @id @default(cuid())
+  
+  taskId  String
+  task    Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  labelId String
+  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+  
+  @@unique([taskId, labelId])
+  @@index([taskId])
+  @@index([labelId])
+}
+
+model Attachment {
+  id           String   @id @default(uuid())
+  taskId       String
+  key          String
+  url          String?  // <-- ADD ? to make it optional
+  filename     String
+  mimeType     String
+  size         Int
+  uploadedById String?
+  createdAt    DateTime @default(now())
+
+  task         Task     @relation(fields: [taskId], references: [id])
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id])
+}
+
+model BoardComment {
+  id      String @id @default(cuid())
+  content String @db.Text
+  
+  taskId  String
+  task    Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  attachments CommentAttachment[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([taskId])
+  @@index([userId])
+}
+
+model CommentAttachment {
+  id       String @id @default(cuid())
+  filename String
+  url      String
+  size     Int?
+  mimeType String?
+  
+  commentId String
+  comment   BoardComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+
+  @@index([commentId])
+}
+
+model BoardInvite {
+  id          String    @id @default(cuid())
+  email       String
+  token       String    @unique
+  role        BoardRole @default(MEMBER)
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  
+  boardId     String
+  board       Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  invitedBy   String
+  inviter     User      @relation("InviteSender", fields: [invitedBy], references: [id], onDelete: Cascade)
+  
+  @@index([token])
+  @@index([boardId])
+  @@index([email])
+}
+
+model ActivityLog {
+  id          String @id @default(cuid())
+  action      String // CREATED, UPDATED, DELETED, MOVED, ASSIGNED, etc.
+  entityType  String // BOARD, COLUMN, TASK, COMMENT, etc.
+  entityId    String
+  description String @db.Text
+  metadata    Json?  // Store additional data like old/new values
+  
+  // Relations
+  boardId String?
+  board   Board?  @relation(fields: [boardId], references: [id], onDelete: SetNull)
+  taskId  String?
+  task    Task?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+
+  @@index([boardId])
+  @@index([taskId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String
+  color     String?
+  icon      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  myTasks MyTask[]
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("categories")
+}
+
+model MyTask {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  dueTime     DateTime
+  itsDone     Boolean
+  priority    String   @default("medium")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  @@map("myTasks")
+}
+
+model Server {
+  id         String @id @default(uuid())
+  name       String
+  imageUrl   String @db.Text
+  inviteCode String @unique
+
+  userId     String
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  members    Member[]
+  channels   Channel[]
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model MessageThread {
+  id          String   @id @default(cuid())
+  messageId   String   @unique // Original message that starts the thread
+  message     Message  @relation("ThreadParent", fields: [messageId], references: [id], onDelete: Cascade)
+  replies     ThreadReply[]
+  replyCount  Int      @default(0)
+  lastReplyAt DateTime?
+  createdAt   DateTime @default(now())
+  
+  @@index([messageId])
+  @@map("message_threads")
+}
+
+model ThreadReply {
+  id          String        @id @default(cuid())
+  threadId    String
+  thread      MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  content     String        @db.Text
+  fileUrl     String?       @db.Text
+  memberId    String
+  member      Member        @relation(fields: [memberId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deleted     Boolean       @default(false)
+  
+  @@index([threadId])
+  @@index([memberId])
+  @@map("thread_replies")
+}
+
+model MessageReaction {
+  id        String   @id @default(cuid())
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    Member   @relation(fields: [memberId], references: [id])
+  emoji     String   // Unicode emoji or custom emoji code
+  createdAt DateTime @default(now())
+  
+  @@unique([messageId, memberId, emoji]) // One reaction per emoji per user
+  @@index([messageId])
+  @@map("message_reactions")
+}
+
+model MessageBookmark {
+  id        String   @id @default(cuid())
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  note      String?  // Optional note about the bookmark
+  createdAt DateTime @default(now())
+  
+  @@unique([messageId, userId])
+  @@index([userId])
+  @@map("message_bookmarks")
+}
+
+model ChannelMember {
+  id        String      @id @default(cuid())
+  channelId String
+  channel   Channel     @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    Member      @relation(fields: [memberId], references: [id])
+  role      ChannelRole @default(MEMBER)
+  joinedAt  DateTime    @default(now())
+  
+  @@unique([channelId, memberId])
+  @@index([channelId])
+  @@index([memberId])
+  @@map("channel_members")
+}
+
+enum ChannelRole {
+  ADMIN
+  MODERATOR
+  MEMBER
+  VIEWER
+}
+
+model ChannelMeeting {
+  id          String    @id @default(cuid())
+  channelId   String
+  channel     Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  startedBy   String    // Member ID who started
+  roomName    String    @unique
+  status      String    @default("active") // active, ended
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+  participants Json[]   // Array of {userId, joinedAt, leftAt}
+  
+  @@index([channelId])
+  @@index([status])
+  @@map("channel_meetings")
+}
+
+enum MemberRole {
+  ADMIN
+  MODERATOR
+  GUEST
+}
+
+model Member {
+  id   String     @id @default(uuid())
+  role MemberRole @default(GUEST)
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  serverId String
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  messages       Message[]
+  directMessages DirectMessage[]
+  threadReplies   ThreadReply[]
+  messageReactions MessageReaction[]
+  channelMemberships ChannelMember[]
+  conversationsInitiated Conversation[] @relation("MemberOne")
+  conversationsReceived  Conversation[] @relation("MemberTwo")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([serverId])
+}
+
+enum ChannelType {
+  TEXT
+  AUDIO
+  VIDEO
+}
+
+model Channel {
+  id   String      @id @default(uuid())
+  name String
+  type ChannelType @default(TEXT)
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  serverId String
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  messages Message[]
+  members     ChannelMember[]
+  meetings    ChannelMeeting[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([serverId])
+}
+
+model Message {
+  id      String @id @default(uuid())
+  content String @db.Text
+  fileUrl String? @db.Text
+  
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  
+  parentId String?  // ID of the message this is replying to
+  parent   Message? @relation("MessageReplies", fields: [parentId], references: [id])
+  replies  Message[] @relation("MessageReplies")
+  
+  threadParent   MessageThread?  @relation("ThreadParent")
+  reactions      MessageReaction[]
+  bookmarks      MessageBookmark[]
+  deleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([channelId])
+  @@index([memberId])
+  @@index([parentId])  // Add index for performance
+}
+
+model Conversation {
+  id String @id @default(uuid())
+
+  memberOneId String
+  memberOne   Member @relation("MemberOne", fields: [memberOneId], references: [id], onDelete: Cascade)
+
+  memberTwoId String
+  memberTwo   Member @relation("MemberTwo", fields: [memberTwoId], references: [id], onDelete: Cascade)
+
+  directMessages DirectMessage[]
+
+  @@unique([memberOneId, memberTwoId])
+  @@index([memberTwoId])
+}
+
+model TeamConversation {
+  id String @id @default(uuid())
+  
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  // Two participants - both are TeamMembers
+  participantOneId String
+  participantOne   TeamMember @relation("ParticipantOne", fields: [participantOneId], references: [id], onDelete: Cascade)
+  
+  participantTwoId String
+  participantTwo   TeamMember @relation("ParticipantTwo", fields: [participantTwoId], references: [id], onDelete: Cascade)
+  
+  directMessages TeamDirectMessage[]
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([participantOneId, participantTwoId])
+  @@index([teamId])
+}
+
+model TeamDirectMessage {
+  id      String  @id @default(uuid())
+  content String  @db.Text
+  fileUrl String? @db.Text
+  
+  conversationId String
+  conversation   TeamConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  // Sender is a TeamMember
+  senderId String
+  sender   TeamMember @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  reactions  TeamDirectMessageReaction[]
+  bookmarks  TeamDirectMessageBookmark[]
+  parent     TeamDirectMessage?  @relation("DmReplies", fields: [parentId], references: [id])
+  replies    TeamDirectMessage[] @relation("DmReplies")
+  parentId   String?
+ 
+  deleted Boolean @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentId])
+  @@index([conversationId])
+  @@index([senderId])
+}
+
+ 
+model TeamDirectMessageReaction {
+  id        String            @id @default(uuid())
+  emoji     String
+  messageId String
+  message   TeamDirectMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime          @default(now())
+ 
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+}
+ 
+model TeamDirectMessageBookmark {
+  id        String            @id @default(uuid())
+  messageId String
+  message   TeamDirectMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime          @default(now())
+ 
+  @@unique([messageId, userId])
+  @@index([messageId])
+}
+ 
+
+model DirectMessage {
+  id      String  @id @default(uuid())
+  content String  @db.Text
+  fileUrl String? @db.Text
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  deleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([memberId])
+  @@index([conversationId])
+}
+
+model Event {
+  id           String            @id @default(cuid())
+  title        String
+  description  String?
+  duration     Int               @default(30)
+  slug         String
+  isPrivate    Boolean           @default(false)
+  locationType EventLocationType
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  meetings Meeting[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("events")
+}
+
+// New: Meeting attendees for team collaboration
+model MeetingAttendee {
+  id        String   @id @default(cuid())
+  meetingId String
+  meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  // Either internal team member or external guest
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  
+  // For external guests or when userId not available
+  email     String
+  name      String?
+  isExternal Boolean @default(false)
+  
+  // RSVP tracking
+  status    String   @default("pending") // pending, accepted, declined, tentative
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([meetingId, email])
+  @@map("meeting_attendees")
+}
+
+// New: Team meeting links (visible to all team members)
+model TeamMeetingLink {
+  id          String   @id @default(cuid())
+  meetingId   String   @unique
+  meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  
+  // If this is a team-wide meeting
+  teamId      String?
+  team        Team?    @relation(fields: [teamId], references: [id])
+  
+  // Shareable link token
+  shareToken  String   @unique
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("team_meeting_links")
+}
+
+model Integration {
+  id           String              @id @default(cuid())
+  provider     IntegrationProvider
+  category     IntegrationCategory
+  appType      IntegrationAppType  @map("app_type")
+  accessToken  String              @map("access_token")
+  refreshToken String?             @map("refresh_token")
+  expiryDate   BigInt?             @map("expiry_date")
+  metadata     Json
+  isConnected  Boolean             @default(true)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, appType], name: "userId_appType")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("integrations")
+}
+
+model Availability {
+  id      String @id @default(cuid())
+  timeGap Int    @default(30)
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  days DayAvailability[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("availability")
+}
+
+model DayAvailability {
+  id          String    @id @default(cuid())
+  day         DayOfWeek
+  startTime   DateTime
+  endTime     DateTime
+  isAvailable Boolean   @default(true)
+
+  availabilityId String
+  availability   Availability @relation(fields: [availabilityId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("day_availability")
+}
+
+model Meeting {
+  id              String        @id @default(cuid())
+  guestName       String
+  guestEmail      String
+  additionalInfo  String?
+  startTime       DateTime
+  endTime         DateTime
+  meetLink        String
+  calendarEventId String
+  calendarAppType String?
+  status          MeetingStatus @default(SCHEDULED)
+  metadata        Json?    // ← ADD THIS LINE
+
+  reminders       Reminder[]
+  userId String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  meetingAttendees MeetingAttendee[]
+  teamMeetingLink  TeamMeetingLink?
+  eventId String
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  notifications Notification[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("meetings")
+}
+
+model AiMeeting {
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  botId           String?  @map("bot_id")
+  meetingUrl      String   @map("meeting_url")
+  meetingName     String?  @map("meeting_name")
+  platform        String?  // zoom, google_meet, teams
+  status          String   @default("pending") // pending, joined, recording, completed, failed
+  
+  // Recording data
+  videoUrl        String?  @map("video_url")
+  audioUrl        String?  @map("audio_url")
+  videoBlob       Bytes?   @map("video_blob")
+  audioBlob       Bytes?   @map("audio_blob")
+  duration        Int?     // in seconds
+  
+  // Transcription
+  transcript      Json?    // Full transcript array
+  speakers        String[] // Unique speakers
+  
+  summary         String?  @db.Text
+  actionItems     Json?    @map("action_items")
+  keyPoints       Json?    @map("key_points")
+  s3VideoKey      String?   @map("s3_video_key")
+  s3AudioKey      String?   @map("s3_audio_key")
+  s3UploadedAt    DateTime? @map("s3_uploaded_at")
+ 
+  startedAt       DateTime? @map("started_at")
+  endedAt         DateTime? @map("ended_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  // Webhook data
+  webhookData     Json?     @map("webhook_data")
+   processedEventIds      String[] @default([]) 
+  lastWebhookTimestamp   String?  
+  errorMessage    String?   @map("error_message")
+  transcriptionProvider  String   @default("assemblyai")
+  assemblyaiTranscriptId String?
+  sourceMeetingId String?  @unique   // links to Meeting.id
+  scheduledFor    DateTime? 
+  
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatMessages    ChatMessage[]
+
+  @@index([userId])
+  @@index([botId])
+  @@index([status])
+  @@map("ai_meetings")  // Better table name
+}
+
+model ChatMessage {
+  id          String   @id @default(cuid())
+  meetingId   String   @map("meeting_id")
+  userId      String   @map("user_id")
+  role        String   // user, assistant, system
+  content     String   @db.Text
+  contextUsed Boolean  @default(false) @map("context_used")
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  aiMeeting   AiMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([meetingId])
+  @@index([userId])
+  @@map("chat_messages")
+}
+
+model File {
+  id           String      @id @default(cuid())
+  userId       String
+  originalName String
+  storageKey   String      @unique
+  mimeType     String
+  size         Int
+  ext          String
+  uploadVia    UploadSource
+  url          String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  notifications Notification[]
+  // NEW: Team and visibility fields
+  teamId       String?     // If null, it's personal file
+  team         Team?       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  visibility   FileVisibility @default(PERSONAL) // PERSONAL, TEAM, PASSWORD_PROTECTED
+  password     String?     // Hashed password for protected files
+  folderId     String?     // For folder organization
+  folder       Folder?     @relation(fields: [folderId], references: [id])
+  
+  // NEW: Assignment and metadata
+  assignedTo   FileAssignment[]
+  fileTags     FileTag[]
+  description  String?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([teamId])
+  @@index([folderId])
+  @@index([createdAt])
+  @@index([visibility])
+  @@map("files")
+}
+
+// NEW: Folder model for organization
+model Folder {
+  id          String   @id @default(cuid())
+  name        String
+  userId      String
+  teamId      String?
+  parentId    String?  // For nested folders
+  parent      Folder?  @relation("FolderChildren", fields: [parentId], references: [id])
+  children    Folder[] @relation("FolderChildren")
+  files       File[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  team Team? @relation(fields: [teamId], references: [id])
+
+  @@index([userId])
+  @@index([teamId])
+  @@index([parentId])
+  @@map("folders")
+}
+
+// NEW: File assignment to team members
+model FileAssignment {
+  id        String   @id @default(cuid())
+  fileId    String
+  file      File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  userId    String   // Assigned to this user
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedBy String  // Who assigned it
+  createdAt DateTime @default(now())
+
+  @@unique([fileId, userId])
+  @@index([userId])
+  @@index([fileId])
+  @@map("file_assignments")
+}
+
+// NEW: File tags for organization
+model FileTag {
+  id     String @id @default(cuid())
+  fileId String
+  file   File   @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  tag    String
+
+  @@index([fileId])
+  @@map("file_tags")
+}
+
+model Storage {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  storageQuota BigInt   @default(2147483648) // 2GB in bytes
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+
+// NEW: Team storage quota tracking (optional - for team-wide quota)
+model TeamStorage {
+  id           String   @id @default(cuid())
+  teamId       String   @unique
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  usedStorage  BigInt   @default(0)
+  quota        BigInt   @default(10737418240) // 10GB default
+  lastUpdated  DateTime @updatedAt
+
+  @@map("team_storage")
+}
+
+model Clip {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  fileName    String
+  fileUrl     String
+  fileSize    Int
+  duration    Float?
+  fileType    String
+  type        String   @default("both") // "audio" | "video" | "both"
+  thumbnailUrl String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isPublic    Boolean  @default(false)
+  shareToken  String?  @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("clip")
+}
+
+model Workspace {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  memberships WorkspaceMembership[]
+  pages       Page[]
+  shares      Share[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMembership {
+  id          String   @id @default(cuid())
+  userId      String
+  workspaceId String
+  DocRole     DocRole     @default(VIEWER)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@map("workspace_memberships")
+}
+
+enum PageVisibility {
+  PRIVATE
+  WORKSPACE
+  PUBLIC
+}
+
+model Page {
+  id          String         @id @default(cuid())
+  title       String         @default("Doc")
+  content     Json?
+  emoji       String?
+  coverImage  String?
+  parentId    String?
+  workspaceId String
+  authorId    String
+  visibility  PageVisibility @default(WORKSPACE)
+  position    Float          @default(0)
+  isPublished Boolean        @default(false)
+  publishedUrl String?       @unique
+  searchVector Unsupported("tsvector")?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  notifications Notification[]
+  
+  parent    Page?    @relation("PageChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children  Page[]   @relation("PageChildren")
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id])
+  blocks    Block[]
+  comments  Comment[]
+  versions  PageVersion[]
+  shares    Share[]
+
+  teamId      String?
+  team        Team?       @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  assignedToId String?
+  assignedTo  TeamMember? @relation("AssignedPages", fields: [assignedToId], references: [id], onDelete: SetNull)
+  assignedById String?
+  
+  // NEW: Favorites relation
+  favoritedBy PageFavorite[]
+  
+  // NEW: Templates
+  isTemplate  Boolean        @default(false)
+  templateCategory String?
+  
+  @@index([teamId])
+  @@index([assignedToId])
+  @@index([isTemplate])
+  @@index([workspaceId])
+  @@index([parentId])
+  @@index([searchVector], type: Gin)
+  @@map("pages")
+}
+
+model PageFavorite {
+  id        String   @id @default(cuid())
+  pageId    String
+  userId    String
+  createdAt DateTime @default(now())
+  
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([pageId, userId])
+  @@index([userId])
+  @@map("page_favorites")
+}
+
+enum BlockType {
+  PARAGRAPH
+  HEADING_1
+  HEADING_2
+  HEADING_3
+  BULLET_LIST
+  NUMBERED_LIST
+  TODO
+  CODE
+  QUOTE
+  DIVIDER
+  IMAGE
+  FILE
+  TABLE
+  EMBED
+  CALLOUT
+}
+
+model Block {
+  id        String    @id @default(cuid())
+  type      BlockType
+  content   Json
+  position  Float     @default(0)
+  pageId    String
+  parentId  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  page     Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  parent   Block?  @relation("BlockChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children Block[] @relation("BlockChildren")
+  comments Comment[]
+
+  @@index([pageId])
+  @@index([parentId])
+  @@map("blocks")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  authorId  String
+  pageId    String?
+  blockId   String?
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author   User      @relation(fields: [authorId], references: [id])
+  page     Page?     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  block    Block?    @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
+
+  @@index([pageId])
+  @@index([blockId])
+  @@map("comments")
+}
+
+model PageVersion {
+  id        String   @id @default(cuid())
+  pageId    String
+  title     String
+  content   Json
+  version   Int
+  authorId  String
+  createdAt DateTime @default(now())
+
+  page   Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id])
+
+  @@unique([pageId, version])
+  @@index([pageId])
+  @@map("page_versions")
+}
+
+model DocFile {
+  id          String   @id @default(cuid())
+  name        String
+  originalName String
+  mimeType    String
+  size        Int
+  url         String
+  key         String  
+  uploaderId  String
+  workspaceId String?
+  createdAt   DateTime @default(now())
+
+  uploader User @relation(fields: [uploaderId], references: [id])
+
+  @@index([uploaderId])
+  @@map("docFiles")
+}
+
+enum ShareType {
+  VIEW
+  COMMENT
+  EDIT
+}
+
+model Share {
+  id          String     @id @default(cuid())
+  token       String     @unique
+  pageId      String
+  workspaceId String
+  type        ShareType  @default(VIEW)
+  expiresAt   DateTime?
+  password    String?
+  createdById String
+  createdAt   DateTime   @default(now())
+
+  page      Page      @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy User      @relation(fields: [createdById], references: [id])
+
+  @@index([token])
+  @@map("shares")
+}
+
+enum EventLocationType {
+  GOOGLE_MEET_AND_CALENDAR
+  ZOOM_MEETING
+  CONFERIO
+}
+
+enum IntegrationProvider {
+  GOOGLE
+  ZOOM
+  CONFERIO
+  MICROSOFT
+}
+
+enum IntegrationCategory {
+  CALENDAR_AND_VIDEO_CONFERENCING
+  VIDEO_CONFERENCING
+  CALENDAR
+}
+
+enum DayOfWeek {
+  SUNDAY
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  CANCELLED
+}
+
+enum UploadSource {
+  WEB
+  API
+}
+
+enum DocRole {
+  OWNER
+  ADMIN
+  EDITOR
+  COMMENTER
+  VIEWER
+}
+
+
+model Calendar {
+  id               String   @id @default(uuid())
+  platform         String
+  oauthClientId    String?
+  oauthClientSecret String?
+  oauthRefreshToken String?
+  createdAt        DateTime @default(now())
+  events           CalendarEvent[]
+}
+
+model CalendarEvent {
+  id           String   @id @default(uuid())
+  calendarId   String
+  calendar     Calendar @relation(fields: [calendarId], references: [id])
+  eventUuid    String   @unique // from the SDK
+  name         String?
+  meetingUrl   String?
+  startTime    DateTime?
+  endTime      DateTime?
+  isRecurring  Boolean  @default(false)
+  botParam     Json?    // scheduled bot configuration
+  createdAt    DateTime @default(now())
+}
+
+enum CallStatus {
+  PENDING
+  CONNECTING
+  ONGOING
+  COMPLETED
+  MISSED
+  DECLINED
+  FAILED
+  ON_HOLD
+}
+
+
+enum CallType {
+  AUDIO
+  VIDEO
+}
+
+model Call {
+  id              String     @id @default(cuid())
+  callerId        String     @map("caller_id")
+  calleeId        String?    @map("callee_id") // Nullable for group calls
+  roomName        String     @unique @default(uuid())
+  status          CallStatus @default(PENDING)
+  type            CallType   @default(AUDIO)
+  isGroupCall     Boolean    @default(false)
+  
+  // For simultaneous calls / merging
+  parentCallId    String?    @map("parent_call_id")
+  parentCall      Call?      @relation("MergedCalls", fields: [parentCallId], references: [id])
+  childCalls      Call[]     @relation("MergedCalls")
+  isOnHold        Boolean    @default(false)
+  
+  startedAt       DateTime?  @map("started_at")
+  endedAt         DateTime?  @map("ended_at")
+  duration        Int?       // Duration in seconds
+  
+  // Relations
+  caller          User       @relation("Caller", fields: [callerId], references: [id])
+  callee          User?      @relation("Callee", fields: [calleeId], references: [id])
+  participants    CallParticipant[]
+  recordings      CallRecording[]
+  notifications   Notification[]
+  whiteboardData  Json?      @map("whiteboard_data")
+  annotations     Json[]     // Screen share annotations
+  
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime @updatedAt @default(now())
+
+  @@index([callerId])
+  @@index([calleeId])
+  @@index([status])
+  @@index([roomName])
+  @@map("calls")
+}
+
+model CallParticipant {
+  id          String   @id @default(cuid())
+  callId      String
+  userId      String
+  joinedAt    DateTime @default(now())
+  leftAt      DateTime?
+  isMuted     Boolean  @default(false)
+  isVideoOn   Boolean  @default(true)
+  isScreenSharing Boolean @default(false)
+  
+  call        Call     @relation(fields: [callId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+  
+  @@unique([callId, userId])
+  @@map("call_participants")
+}
+
+model CallRecording {
+  id          String   @id @default(cuid())
+  callId      String   @map("call_id")
+  recordedBy  String   @map("recorded_by") // User who initiated recording
+  
+  url         String
+  filename    String
+  size        Int?     // File size in bytes
+  duration    Int?     // Recording duration in seconds
+  format      String   @default("webm") // webm, mp3, etc.
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  call        Call     @relation(fields: [callId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [recordedBy], references: [id])
+  
+  @@index([callId])
+  @@map("call_recordings")
+}
+
+enum FileVisibility {
+  PERSONAL
+  TEAM
+  PASSWORD_PROTECTED
+}
+
+enum TimeEntryStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TimeEntryType {
+  MANUAL
+  TIMER
+}
+
+model TimeEntry {
+  id                String          @id @default(cuid())
+  userId            String
+  user              User            @relation("UserTimeEntries", fields: [userId], references: [id], onDelete: Cascade)
+  teamId            String
+  team              Team            @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  taskId            String?
+  task              Task?           @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  startTime         DateTime
+  endTime           DateTime?
+  duration          Int             
+  isBillable        Boolean         @default(true)
+  billableStatus    TimeEntryStatus @default(PENDING)
+  entryType         TimeEntryType   @default(TIMER)
+  approvedBy        String?
+  approvedAt        DateTime?
+  approvedByUser    User?           @relation("TimeEntryApprover", fields: [approvedBy], references: [id])
+  description       String?
+  notes             String?
+  isRunning         Boolean         @default(false)
+  lastResumedAt     DateTime?
+  totalPausedTime   Int             @default(0)
+  lastActiveAt      DateTime?
+  isPaused          Boolean         @default(false)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([teamId])
+  @@index([taskId])
+  @@index([startTime])
+  @@index([billableStatus])
+  @@index([entryType])
+  @@map("time_entries")
+}
+
+model ManualTimeRequest {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId        String
+  team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  year          Int
+  month         Int
+  requestCount  Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, teamId, year, month])
+  @@index([userId])
+  @@map("manual_time_requests")
+}
+
+model AIAgentSession {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  sessionType String   // 'voice', 'chat', 'proactive'
+  status      String   @default("active")
+  
+  currentTeamId    String?
+  activeBoardId    String?
+  activeMeetingId  String?
+  activeTaskId     String?
+  
+  history     Json[]
+  activeTools String[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model VoiceCommand {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  rawCommand  String   @db.Text
+  intent      String
+  confidence  Float
+  entities    Json
+  executed    Boolean  @default(false)
+  toolCalls   Json[]
+  result      Json?
+  latencyMs   Int
+  
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Reminder {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  
+  dueDate     DateTime
+  timezone    String   @default("UTC")
+  isRecurring Boolean  @default(false)
+  recurrence  String?
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Relations to existing models
+  taskId      String?
+  task        Task?    @relation(fields: [taskId], references: [id])
+  meetingId   String?
+  meeting     Meeting? @relation(fields: [meetingId], references: [id])
+  
+  status      String   @default("PENDING")
+  notifiedAt  DateTime?
+  completedAt DateTime?
+  
+  aiContext   String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, dueDate])
+  @@index([status])
+}
+
+enum IntegrationAppType {
+  GOOGLE_MEET_AND_CALENDAR  
+  ZOOM_MEETING              
+  OUTLOOK_CALENDAR          
+  SLACK                     
+  DISCORD                   
+  TEAMS                     
+  CLICKUP                   
+  NOTION
+  JIRA
+  MICROSOFT_ONEDRIVE
+  BOX
+  DROPBOX
+  SALESFORCE
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type        String   // TASK_ASSIGNED, PAGE_ASSIGNED, MEETING_SCHEDULED, CALL_INCOMING, FILE_ASSIGNED, TIME_APPROVAL_NEEDED, etc.
+  title       String
+  body        String
+  data        Json?    // Contextual data: { taskId, boardId, pageId, meetingId, etc. }
+  
+  // Related entities (optional links)
+  taskId      String?
+  task        Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
+  pageId      String?
+  page        Page?    @relation(fields: [pageId], references: [id], onDelete: SetNull)
+  meetingId   String?
+  meeting     Meeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+  fileId      String?
+  file        File?    @relation(fields: [fileId], references: [id], onDelete: SetNull)
+  callId      String?
+  call        Call?    @relation(fields: [callId], references: [id], onDelete: SetNull)
+
+  // Delivery tracking
+  channels    String[] // ["in_app", "email", "slack", "discord", "push"]
+  read        Boolean  @default(false)
+  readAt      DateTime?
+  clicked     Boolean  @default(false)
+  clickedAt   DateTime?
+  
+  // For actionable notifications
+  actions     Json?    // [{ label: "Approve", action: "approve_time", endpoint: "/api/..." }]
+  
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime? // Auto-archive after date
+  
+  @@index([userId, read, createdAt])
+  @@index([type, createdAt])
+  @@map("notifications")
+}
+
+
+model NotificationPreference {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Channel preferences by notification type
+  preferences     Json     // { TASK_ASSIGNED: { in_app: true, email: true, slack: false }, ... }
+  
+  quietHoursStart Int?     // 0-23, null if disabled
+  quietHoursEnd   Int?     // 0-23
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("notification_preferences")
+}
+
+
+model VideoConference {
+  id              String   @id @default(cuid())
+  roomId          String   @unique
+  title           String   @default("Untitled Meeting")
+  description     String?
+  hostId          String
+  host            User     @relation("VideoConferenceHost", fields: [hostId], references: [id], onDelete: Cascade)
+
+  password        String?
+  requireApproval Boolean  @default(false)
+  isPublic        Boolean  @default(false)
+
+  backgroundType  String   @default("none")
+  backgroundValue String?
+
+  status          VMStatus @default(WAITING)
+  startedAt       DateTime?
+  endedAt         DateTime?
+
+  participants    VMParticipant[]
+  chatMessages    VMChatMessage[]
+  waitingRoom     VMWaitingEntry[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([hostId])
+  @@index([status])
+  @@map("video_conferences")
+}
+
+enum VMStatus {
+  WAITING
+  ACTIVE
+  ENDED
+}
+
+model VMParticipant {
+  id          String   @id @default(cuid())
+  meetingId   String
+  meeting     VideoConference @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  userId      String?
+  user        User?    @relation("VMParticipants", fields: [userId], references: [id], onDelete: SetNull)
+
+  guestName   String?
+  guestEmail  String?
+
+  role        VMRole   @default(PARTICIPANT)
+  joinedAt    DateTime @default(now())
+  leftAt      DateTime?
+
+  livekitIdentity String?
+
+  @@unique([meetingId, livekitIdentity])
+  @@index([meetingId])
+  @@map("vm_participants")
+}
+
+enum VMRole {
+  HOST
+  CO_HOST
+  PARTICIPANT
+}
+
+model VMChatMessage {
+  id          String   @id @default(cuid())
+  meetingId   String
+  meeting     VideoConference @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  senderId    String?
+  senderName  String
+  senderImage String?
+  content     String   @db.Text
+  type        VMChatType @default(TEXT)
+
+  createdAt   DateTime @default(now())
+
+  @@index([meetingId, createdAt])
+  @@map("vm_chat_messages")
+}
+
+enum VMChatType {
+  TEXT
+  REACTION
+  SYSTEM
+}
+
+model VMWaitingEntry {
+  id          String   @id @default(cuid())
+  meetingId   String
+  meeting     VideoConference @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  guestName   String?
+  guestEmail  String?
+  requestedAt DateTime @default(now())
+  status      String   @default("waiting")
+
+  @@index([meetingId, status])
+  @@map("vm_waiting_entries")
+}
+
+
+
+model VideoMeeting {
+  id            String   @id @default(cuid())
+  roomName      String   @unique
+  title         String
+  createdById   String
+  createdBy     User     @relation("VideoMeetingCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  scheduledAt   DateTime?
+  startedAt     DateTime?
+  endedAt       DateTime?
+  settings      Json     @default("{}")
+  chatLog       Json[]   @default([])
+  participants  VideoMeetingParticipant[]
+  recordings    VideoMeetingRecording[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([createdById])
+  @@index([roomName])
+  @@map("video_meetings")
+}
+
+model VideoMeetingParticipant {
+  id         String       @id
+  meetingId  String
+  meeting    VideoMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User         @relation("VideoMeetingParticipants", fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt   DateTime     @default(now())
+  leftAt     DateTime?
+  duration   Int?
+  role       String       @default("participant")
+  deviceInfo Json?
+
+  @@index([meetingId])
+  @@index([userId])
+  @@map("video_meeting_participants")
+}
+
+model VideoMeetingRecording {
+  id         String       @id @default(cuid())
+  meetingId  String
+  meeting    VideoMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  s3Key      String
+  startedAt  DateTime
+  endedAt    DateTime?
+  fileSize   BigInt?
+  duration   Int?
+  status     String       @default("pending")
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([meetingId])
+  @@map("video_meeting_recordings")
+}
+
+
+model Note {
+  id          String   @id @default(cuid())
+  title       String   @default("Untitled Note")
+  content     Json?
+  emoji       String?
+  coverImage  String?
+  authorId    String
+  folderId    String?  
+  isArchived  Boolean  @default(false)
+  isPinned    Boolean  @default(false)
+  color       String?  
+  searchVector Unsupported("tsvector")?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  files       NoteFile[]
+  author      User          @relation(fields: [authorId], references: [id])
+  blocks      NoteBlock[]
+  versions    NoteVersion[]
+  shares      NoteShare[]
+  favorites   NoteFavorite[]
+  
+  @@index([authorId])
+  @@index([folderId])
+  @@index([isArchived])
+  @@index([isPinned])
+  @@index([searchVector], type: Gin)
+  @@map("notes")
+}
+
+model NoteFavorite {
+  id        String   @id @default(cuid())
+  noteId    String
+  userId    String
+  createdAt DateTime @default(now())
+  
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([noteId, userId])
+  @@index([userId])
+  @@map("note_favorites")
+}
+
+enum NoteBlockType {
+  PARAGRAPH
+  HEADING_1
+  HEADING_2
+  HEADING_3
+  BULLET_LIST
+  NUMBERED_LIST
+  TODO
+  CODE
+  QUOTE
+  DIVIDER
+  IMAGE
+  FILE
+  TABLE
+  EMBED
+  CALLOUT
+}
+
+model NoteBlock {
+  id        String        @id @default(cuid())
+  type      NoteBlockType
+  content   Json
+  position  Float         @default(0)
+  noteId    String
+  parentId  String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  note     Note    @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  parent   NoteBlock?  @relation("NoteBlockChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children NoteBlock[] @relation("NoteBlockChildren")
+  
+  @@index([noteId])
+  @@index([parentId])
+  @@map("note_blocks")
+}
+
+model NoteVersion {
+  id        String   @id @default(cuid())
+  noteId    String
+  title     String
+  content   Json
+  version   Int
+  authorId  String
+  createdAt DateTime @default(now())
+
+  note   Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id])
+
+  @@unique([noteId, version])
+  @@index([noteId])
+  @@map("note_versions")
+}
+
+model NoteFile {
+  id           String   @id @default(cuid())
+  name         String
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  key          String  
+  uploaderId   String
+  noteId       String?  // Optional: link to specific note
+  createdAt    DateTime @default(now())
+
+  uploader User @relation(fields: [uploaderId], references: [id])
+  note     Note? @relation(fields: [noteId], references: [id], onDelete: SetNull)
+
+  @@index([uploaderId])
+  @@index([noteId])
+  @@map("note_files")
+}
+
+enum NoteShareType {
+  VIEW
+  COMMENT
+  EDIT
+}
+
+model NoteShare {
+  id          String      @id @default(cuid())
+  token       String      @unique
+  noteId      String
+  type        NoteShareType @default(VIEW)
+  expiresAt   DateTime?
+  password    String?
+  createdById String
+  createdAt   DateTime    @default(now())
+
+  note      Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@index([token])
+  @@map("note_shares")
+}
+
+enum ScreenShareStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  ACTIVE
+  ENDED
+}
+
+model ScreenShareSession {
+  id         String            @id @default(cuid())
+  teamId     String
+  adminId    String
+  employeeId String
+  status     ScreenShareStatus @default(PENDING)
+  expiresAt  DateTime?
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  team       Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([employeeId])
+  @@index([teamId, status])
+  @@map("screen_share_sessions")
+}
+
+model UserLocation {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  lat       Float
+  lng       Float
+  accuracy  Float?
+  updatedAt DateTime @updatedAt
+
+  @@map("user_locations")
+}
+
+model ScheduledEmail {
+  id                String   @id @default(cuid())
+  userId            String
+  to                String[]
+  subject           String
+  body              String   @db.Text
+  cc                String[]
+  bcc               String[]
+  replyToMessageId  String?
+  threadId          String?
+  scheduledAt       DateTime
+  sentAt            DateTime?
+  status            String   @default("pending") // pending | sent | failed | cancelled
+  error             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([scheduledAt, status])
+} 
+
+
+model Room {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String
+  teamId       String
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  createdById  String
+  createdBy    User     @relation("RoomCreator", fields: [createdById], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  thumbnailUrl String?
+  isArchived   Boolean  @default(false)
+  snapshot     String?  @db.Text
+
+  @@unique([teamId, slug])
+  @@index([teamId])
+  @@index([createdById])
+  @@map("rooms")
+}
+
+model MusicTrack {
+  id            String   @id @default(cuid())
+  title         String
+  artist        String
+  album         String?
+  genre         String?
+  duration      Int?     // in seconds
+  coverImage    String?  // URL to cover art
+  
+  audioUrl      String   // S3/R2 public URL
+  audioKey      String   @unique // S3/R2 object key
+  originalName  String
+  mimeType      String
+  size          Int      // bytes
+  
+  uploadedById  String
+  uploadedBy    User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  
+  playlists     PlaylistTrack[]
+  favourites    MusicFavourite[]
+  
+  playCount     Int      @default(0)
+  isPublic      Boolean  @default(true)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([uploadedById])
+  @@index([genre])
+  @@index([createdAt])
+  @@map("music_tracks")
+}
+
+model Playlist {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  coverImage  String?
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  tracks      PlaylistTrack[]
+  
+  isPublic    Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@map("playlists")
+}
+
+model PlaylistTrack {
+  id         String   @id @default(cuid())
+  
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  
+  trackId    String
+  track      MusicTrack @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  
+  order      Int      @default(0)
+  addedAt    DateTime @default(now())
+
+  @@unique([playlistId, trackId])
+  @@index([playlistId])
+  @@index([trackId])
+  @@map("playlist_tracks")
+}
+
+model MusicFavourite {
+  id        String   @id @default(cuid())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  trackId   String
+  track     MusicTrack @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+
+  @@unique([userId, trackId])
+  @@index([userId])
+  @@index([trackId])
+  @@map("favourites")
+}
+
+model VoiceAgentSession {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      String   @default("idle") // idle, listening, processing, speaking
+  messages    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@map("voice_agent_sessions")
+}
+
+model VoiceAgentReminder {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String   // meeting, task, assignment, general
+  title       String
+  description String?
+  metadata    Json?
+  scheduledAt DateTime
+  delivered   Boolean  @default(false)
+  deliveredAt DateTime?
+  acknowledged Boolean @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([userId, scheduledAt])
+  @@index([delivered])
+  @@map("voice_agent_reminders")
+}
+
+model UserVoiceSettings {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enabled           Boolean  @default(true)
+  wakeWord          String   @default("hey conferio")
+  voiceId           String   @default("21m00Tcm4TlvDq8ikWAM")
+  proactiveEnabled  Boolean  @default(true)
+  volume            Float    @default(1.0)
+  language          String   @default("en")
+  aiProvider        String   @default("openai") // openai, gemini, claude, ollama
+  aiModel           String   @default("gpt-4o")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("user_voice_settings")
+}
+
+
+model MusicFavorite {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  itemId    String   // JioSaavn id OR uploaded track id (prefixed "local:")
+  type      MusicFavoriteType
+  // denormalized snapshot for fast rendering without re-fetching JioSaavn
+  title     String
+  subtitle  String?
+  image     String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, itemId, type])
+  @@index([userId, type])
+}
+
+enum MusicFavoriteType {
+  SONG
+  ALBUM
+  PLAYLIST
+  ARTIST
+  SHOW
+}
+
+model MusicPlaylist {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  coverImage  String?
+
+  // array of track refs - JioSaavn ids OR "local:<uploadedTrackId>"
+  songIds     String[] @default([])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model RecentlyPlayed {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  itemId    String   // JioSaavn song id OR "local:<uploadedTrackId>"
+  title     String
+  subtitle  String?
+  image     String?
+  duration  Int?
+  type      String   @default("song")
+  playedAt  DateTime @default(now())
+
+  @@index([userId, playedAt])
+}
+
+model UserMusicPreferences {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  languages String[] @default(["hindi", "english"])
+  streamQuality String @default("excellent") // low | medium | high | excellent
+
+  updatedAt DateTime @updatedAt
+}
+
+// User-uploaded tracks (stored on Cloudflare R2)
+model UploadedTrack {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title       String
+  artist      String?
+  album       String?
+
+  // R2 object keys
+  audioKey    String   // e.g. music/<userId>/<id>.mp3
+  imageKey    String?  // optional cover art
+
+  duration    Int?     // seconds
+  fileSize    Int?     // bytes
+  mimeType    String   @default("audio/mpeg")
+
+  isPublic    Boolean  @default(false) // visible to other users in search
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([isPublic])
+}
+
+model RouteViewSession {
+  id         String   @id @default(cuid())
+  route      String
+  routeLabel String?  @map("route_label")
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId     String   @map("team_id")
+  team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  startedAt  DateTime @default(now()) @map("started_at")
+  endedAt    DateTime? @map("ended_at")
+  duration   Int?
+  
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([route])
+  @@index([userId])
+  @@index([teamId])
+  @@index([startedAt])
+  @@map("route_view_sessions")
+}
+
+model RouteViewAggregate {
+  id            String   @id @default(cuid())
+  route         String
+  routeLabel    String?  @map("route_label")
+  userId        String   @map("user_id")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId        String   @map("team_id")
+  team          Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
+  totalDuration Int      @default(0) @map("total_duration")
+  viewCount     Int      @default(1) @map("view_count")
+  lastViewedAt  DateTime @default(now()) @map("last_viewed_at")
+  
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@unique([route, userId])
+  @@index([teamId])
+  @@index([userId])
+  @@index([route])
+  @@map("route_view_aggregates")
+}
