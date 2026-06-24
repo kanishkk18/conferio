@@ -13,7 +13,7 @@
     "build": "next build",
     "start": "next start --port 4002",
     "check-types": "tsc --pretty --noEmit",
-    "postinstall": "prisma generate && patch-package",
+    "postinstall": "prisma generate && npx patch-package || true",
     "check-format": "prettier --check .",
     "check-lint": "eslint -c eslint.config.cjs ./",
     "check-unused": "npx knip",
