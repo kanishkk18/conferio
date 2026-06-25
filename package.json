@@ -155,7 +155,7 @@
     "react-daisyui": "5.0.5",
     "react-day-picker": "^9.14.0",
     "react-dom": "^18.3.1",
-    "react-dropzone": "^14.3.8",
+    "react-dropzone": "^15.0.0",
     "react-google-recaptcha": "3.1.0",
     "react-hook-form": "^7.54.2",
     "react-hot-toast": "2.5.2",
