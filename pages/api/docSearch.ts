@@ -2,16 +2,11 @@ import { NextApiRequest, NextApiResponse } from 'next'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-// import { DEFAULT_TEST_USER, isTestMode } from '@/lib/test-user'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions)
   
-  // Use test user in development if enabled
-  // if (isTestMode && !session) {
-  //   session = { user: DEFAULT_TEST_USER }
-  // }
-
+  
   if (!session?.user?.id) {
     return res.status(401).json({ error: 'Unauthorized' })
   }

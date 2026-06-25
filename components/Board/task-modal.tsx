@@ -2203,7 +2203,7 @@ function StatusField({ task, isPending, onUpdate }: StatusFieldProps) {
         disabled={isPending}
       >
         <SelectTrigger className="w-full border-none bg-transparent h-auto p-0 focus:ring-0 text-sm shadow-none gap-2 hover:bg-transparent">
-          <span className={cn("size-2 rounded-full flex-shrink-0", currentStatus.color)} />
+          {/* <span className={cn("size-2 rounded-full flex-shrink-0", currentStatus.color)} /> */}
           <SelectValue placeholder="Select status" />
         </SelectTrigger>
         <SelectContent className="w-40">
@@ -2312,7 +2312,7 @@ function PriorityField({ task, isPending, onUpdate }: PriorityFieldProps) {
           <button
             type="button"
             className={cn(
-              "flex items-center gap-2 text-sm w-full text-left hover:underline underline-offset-2 transition-colors",
+              "flex items-center gap-2 text-sm w-full text-left transition-colors",
               currentPriority.color
             )}
           >
@@ -2366,11 +2366,11 @@ function DateField({
   return (
     <MetaRow icon={<CalendarIcon className="size-4" />} label="Dates">
       <Popover open={open} onOpenChange={onOpenChange}>
-        <PopoverTrigger asChild className="!py-0 flex w-fit">
+        <PopoverTrigger asChild className="!py-0 h-7 flex w-fit">
           <Button
             id={id}
             variant="outline"
-            className="group/pick-date w-36 py-0 flex !gap-0 border-none !bg-transparent justify-between hover:!bg-transparent"
+            className="group/pick-date w-28 !py-0 px-0 !h-fit flex !gap-0 border-none justify-between hover:!bg-transparent"
           >
             <CalendarIcon
               aria-hidden="true"
@@ -2800,20 +2800,22 @@ function AttachmentsAccordion({ task, boardId, onUploadComplete, onSetCover, onD
                   >
                     <List className="size-3.5" />
                   </button>
-                </div>
-                {/* Download All */}
-                <Button
-                  variant="ghost"
-                  size="sm"
+                  <button
+                  
+                  aria-label="download all attachments"
+                  
                   onClick={handleDownloadAll}
-                  className="h-7 px-2.5 text-[12px] text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 gap-1.5"
+                  className="h-7 p-1.5 rounded-none text-[12px] text-gray-500 hover:text-gray-700  dark:text-gray-400 dark:hover:text-gray-200 gap-1.5"
                 >
                   <Download className="size-3.5" />
-                  <span className="hidden sm:inline">Download All</span>
-                </Button>
+                </button>
+                <FileUpload taskId={task.id} type="task" onUploadComplete={onUploadComplete} />
+                </div>
+                {/* Download All */}
+                
               </>
             )}
-            <FileUpload taskId={task.id} type="task" onUploadComplete={onUploadComplete} />
+            
           </div>
         </div>
       </CollapsibleTrigger>
@@ -3158,7 +3160,7 @@ export function TaskModal({ task, boardId, boardMembers, labels, closeModal }: T
 
   return (
     <Dialog open={true} onOpenChange={() => closeModal()}>
-      <DialogContent className="max-h-[96%] border lg:h-[96%] h-[98%] md:min-w-[92rem] lg:min-w-[92.5rem] rounded-lg max-w-[92.5rem] !py-0 !p-0 dark:border-[#333333] bg-white dark:bg-[#111111] shadow-none">
+      <DialogContent className="max-h-[96%] border lg:h-[96%] h-[98%] md:min-w-[92rem] lg:min-w-[92.5rem] rounded-lg max-w-[92.5rem] !py-0 !p-0 dark:border-[#333333] bg-white dark:bg-[#111111] shadow-none ">
         <div className="h-full flex flex-col">
           {/* Top bar */}
           <div className="px-4 pr-10 items-center border-b h-10 max-h-10 flex justify-between border-gray-100 dark:border-white/[0.06] flex-shrink-0">
@@ -3173,12 +3175,12 @@ export function TaskModal({ task, boardId, boardMembers, labels, closeModal }: T
           </div>
 
           {/* ── Resizable body ── */}
-          <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0 border-none">
+          <ResizablePanelGroup direction="horizontal" className="flex-1 border-none">
 
             {/* Left panel */}
             <ResizablePanel>
               <ResizablePanelGroup direction="vertical">
-                <ScrollArea className="h-full overflow-y-auto">
+                <ScrollArea className="h-[90vh] overflow-y-auto">
 
                   {task.coverImage && (
                     <ResizablePanel defaultSize={50} maxSize={65} minSize={35} className="flex h-48 max-h-52 items-start">
@@ -3197,7 +3199,7 @@ export function TaskModal({ task, boardId, boardMembers, labels, closeModal }: T
                   <ResizableHandle className="bg-transparent border-none" />
 
                   <ResizablePanel className="pb-8">
-                    <ResizablePanelGroup direction="horizontal" className="!min-w-full flex justify-center">
+                    <ResizablePanelGroup direction="horizontal" className="flex h-full justify-center">
                       <ResizablePanel defaultSize={60} className={cn("md:max-w-[75%] md:min-w-[75%] pt-5 space-y-4", !iscollapsibleOpen && "md:max-w-[65%] md:min-w-[65%] px-6")}>
                         {/* Side toggle buttons */}
                         <div className="absolute inset-0 left-auto right-2 flex flex-col gap-y-2.5 dark:bg-[#111111] bg-white py-2 h-fit w-fit px-2 top-2 border border-gray-100 dark:border-white/[0.06] rounded-md z-10">

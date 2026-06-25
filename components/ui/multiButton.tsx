@@ -1907,8 +1907,8 @@ return (
             <div className={`max-w-[16vw] px-2 py-0.5 hover:bg-[#EEE] hover:dark:bg-[#222] rounded-xl text-[12px] truncate leading-snug ${
               isMe ? ' dark:text-zinc-300 rounded-tl-sm' : ' dark:text-zinc-300 rounded-tl-sm'
             }`}>
-              {msg.fileUrl ? <div className="">
-               <Paperclip animateOnHover className="size-"/> Attachment
+              {msg.fileUrl ? <div className="flex items-center gap-1">
+               <Paperclip animateOnHover className="size-3.5"/> Attachment
               </div> : msg.content}
             </div>
           </div>

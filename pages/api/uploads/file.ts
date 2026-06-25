@@ -75,7 +75,6 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { s3, uploadToS3 } from 'lib/aws-s3'
 import { nanoid } from 'nanoid'
-import { DEFAULT_TEST_USER, isTestMode } from '@/lib/test-user'
 import formidable from 'formidable'
 import fs from 'fs'
 
@@ -87,10 +86,7 @@ export const config = {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   let session = await getServerSession(req, res, authOptions)
-  
-  if (isTestMode && !session) {
-    session = { user: DEFAULT_TEST_USER }
-  }
+
 
   if (!session?.user?.id) {
     return res.status(401).json({ success: 0, message: 'Unauthorized' })
