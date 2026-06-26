@@ -2692,25 +2692,13 @@ const variants = {
 
 
 // Ring Component
-const DefaultRing = () => {
+const TimeEntry = () => {
   return (
-    <FloatingPanelContent >
-      <div className="text-foreground flex w-64 items-center gap-3 overflow-hidden px-4 py-2">
-        <Phone className="h-5 w-5 text-green-500" />
-        <div className="flex-1">
-          <p className="pointer-events-none text-sm font-medium text-white">
-            Incoming Call
-          </p>
-          <p className="pointer-events-none text-xs text-white opacity-70">
-            Guillermo Rauch
-          </p>
-        </div>
-        <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-      </div>
-    </FloatingPanelContent>
+    <>
+      <TimeEntryWidget/> 
+    </>
   )
 }
-
 
 
 const PlusOption = () => {
@@ -2798,7 +2786,7 @@ export default function DynamicIsland({
       // case "notification":
       //   return <Notification />
       case "timer":
-        return <TimeEntryWidget />
+        return <TimeEntry />
       case "music":
         return <MusicPlayer />
       case "record":

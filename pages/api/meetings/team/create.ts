@@ -120,6 +120,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } = req.body
 
     // ─── PHASE 1: Parallel validation queries ───────────────────────────────
+    // const [teamMemberCheck, event] = await Promise.all([
+    //   // Membership check (only if teamId provided)
+    //   teamId
+    //     ? prisma.teamMember.findFirst({ where: { teamId, userId: user.id } })
+    //     : Promise.resolve(true), // skip check
+    //   // Event fetch
+    //   prisma.event.findFirst({
+    //     where: { id: eventId, userId: user.id },
+    //     include: { user: true },
+    //   }),
+    // ])
+  
+    // Only these roles can schedule team meetings
+    const CAN_SCHEDULE_TEAM_MEETING = ['OWNER', 'ADMIN', 'MANAGER']
+
     const [teamMemberCheck, event] = await Promise.all([
       // Membership check (only if teamId provided)
       teamId
@@ -131,6 +146,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         include: { user: true },
       }),
     ])
+
+    if (teamId && !teamMemberCheck) {
+      return res.status(HTTPSTATUS.FORBIDDEN).json({ message: 'Not a member of this team' })
+    }
+    
+    // Check if user has permission to schedule team meetings
+    if (teamId && teamMemberCheck && !CAN_SCHEDULE_TEAM_MEETING.includes(teamMemberCheck.role as any)) {
+      return res.status(HTTPSTATUS.FORBIDDEN).json({ 
+        message: 'Only owners, admins, and managers can schedule team meetings' 
+      })
+    }
 
     if (teamId && !teamMemberCheck) {
       return res.status(HTTPSTATUS.FORBIDDEN).json({ message: 'Not a member of this team' })

@@ -3933,15 +3933,28 @@ export default function BookingPage({
   });
 
   // Fetch team members when team is selected
-  const { data: teamMembersData, isLoading: isLoadingTeamMembers } = useQuery({
-    queryKey: ["team-members", selectedTeam?.slug],
+  // const { data: teamMembersData, isLoading: isLoadingTeamMembers } = useQuery({
+  //   queryKey: ["team-members", selectedTeam?.slug],
+  //   queryFn: async () => {
+  //     if (!selectedTeam) return null;
+  //     const response = await fetch(`/api/teams/${selectedTeam.slug}/members-for-selection`);
+  //     if (!response.ok) throw new Error("Failed to fetch team members");
+  //     return response.json();
+  //   },
+  //   enabled: !!selectedTeam,
+  // });
+
+  // Fetch team members when team is selected
+const { data: teamMembersData, isLoading: isLoadingTeamMembers } = useQuery({
+    queryKey: ["team-members", selectedTeam?.id],
     queryFn: async () => {
       if (!selectedTeam) return null;
-      const response = await fetch(`/api/teams/${selectedTeam.slug}/members-for-selection`);
+      const identifier = selectedTeam.slug || selectedTeam.id;
+      const response = await fetch(`/api/teams/${identifier}/members-for-selection`);
       if (!response.ok) throw new Error("Failed to fetch team members");
       return response.json();
     },
-    enabled: !!selectedTeam,
+    enabled: !!selectedTeam?.id,
   });
 
   // Fetch availability
@@ -4025,10 +4038,19 @@ export default function BookingPage({
   const timeSlots = generateTimeSlots();
 
   // Team selection handlers
+  // const handleSelectTeam = (team: Team) => {
+  //   setSelectedTeam(team);
+  //   setIsTeamMode(true);
+  //   setShowTeamModal(false);
+  // };
+
   const handleSelectTeam = (team: Team) => {
     setSelectedTeam(team);
     setIsTeamMode(true);
     setShowTeamModal(false);
+    // Clear previous selections when switching teams
+    setSelectedMembers(new Set());
+    setSelectAllTeam(false);
   };
 
   const handleSwitchTo1on1 = () => {
@@ -4038,10 +4060,19 @@ export default function BookingPage({
     setExternalAttendees([]);
   };
 
+  // const handleSelectAllTeam = (checked: boolean) => {
+  //   setSelectAllTeam(checked);
+  //   if (checked && teamMembersData?.data?.members) {
+  //     setSelectedMembers(new Set(teamMembersData.data.members.map((m: TeamMember) => m.id)));
+  //   } else {
+  //     setSelectedMembers(new Set());
+  //   }
+  // };
   const handleSelectAllTeam = (checked: boolean) => {
     setSelectAllTeam(checked);
-    if (checked && teamMembersData?.data?.members) {
-      setSelectedMembers(new Set(teamMembersData.data.members.map((m: TeamMember) => m.id)));
+    const members = teamMembersData?.data?.members || teamMembersData?.members || [];
+    if (checked && members.length > 0) {
+      setSelectedMembers(new Set(members.map((m: TeamMember) => m.id)));
     } else {
       setSelectedMembers(new Set());
     }
@@ -4073,13 +4104,13 @@ export default function BookingPage({
     setExternalAttendees(externalAttendees.filter(e => e.email !== email));
   };
 
-  const totalAttendees = selectedMembers.size + externalAttendees.length;
+    const totalAttendees = selectedMembers.size + externalAttendees.length;
 
   // Don't render if modal is closed (when used as modal)
   if (externalOpen !== undefined && !isOpen) return null;
 
-  // Loading state
-  if (isLoadingEvent) {
+  // Show loading while waiting for router.query to populate OR while fetching event
+  if (!effectiveUsername || !effectiveSlug || isLoadingEvent) {
     return (
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="max-w-4xl h-[90vh] p-0">
@@ -4325,7 +4356,8 @@ export default function BookingPage({
 
   // Attendee Selection Step
   if (step === "select-attendees") {
-    const members = teamMembersData?.data?.members || [];
+    // const members = teamMembersData?.data?.members || [];
+    const members = teamMembersData?.data?.members || teamMembersData?.members || [];
 
     return (
       <>
