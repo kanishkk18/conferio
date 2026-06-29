@@ -500,8 +500,8 @@ function NotificationItem({
     <div
       onClick={onRead}
       className={`
-        flex items-start gap-3 px-4 py-[14px] cursor-pointer border-b border-gray-100 transition-colors duration-150 relative
-        ${isUnread ? 'bg-sky-50 hover:bg-sky-100' : 'bg-white hover:bg-gray-50'}
+        flex w-full relative max-w-[370px] items-center justify-between gap-4 rounded-2xl border border-neutral-50 bg-white p-3.5 shadow-xl shadow-neutral-200 dark:border-neutral-900 dark:bg-neutral-950 dark:shadow-neutral-950/70
+        ${isUnread ? 'bg-sky-50 hover:bg-sky-100' : ''}
       `}
     >
       {/* Unread dot */}
@@ -510,21 +510,24 @@ function NotificationItem({
       )}
 
       {/* Icon */}
-      <div className="shrink-0 pl-1">
+      <div className="shrink-0 h-10 w-10 rounded-full bg-[#181818] flex justify-center items-center">
         {icon}
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0">
-        <p className={`text-[13px] text-gray-900 mb-[2px] leading-snug ${isUnread ? 'font-semibold' : 'font-normal'}`}>
-          {notification.title}
-        </p>
-        <p className="text-xs text-gray-500 mb-1.5 leading-relaxed break-words">
-          {notification.body}
-        </p>
 
-        {/* Actions */}
-        {notification.actions && notification.actions.length > 0 && (
+      <div className="flex w-full flex-col">
+        <div className="flex w-full items-start justify-between">
+          <span className="text-sm font-medium"> {notification.title}</span>
+          <span className="text-xs text-neutral-400">
+           {formatRelativeTime(notification.createdAt)}
+          </span>
+        </div>
+        <span className="text-sm text-start text-neutral-600 dark:text-neutral-400 line-clamp-1">
+           {notification.body}
+        </span>
+
+        {/* {notification.actions && notification.actions.length > 0 && (
           <div className="flex gap-1.5 flex-wrap">
             {(notification.actions as NotificationAction[]).map((action) => (
               <button
@@ -542,12 +545,9 @@ function NotificationItem({
               </button>
             ))}
           </div>
-        )}
+        )} */}
 
-        {/* Time */}
-        <p className="text-[11px] text-gray-400 mt-1.5">
-          {formatRelativeTime(notification.createdAt)}
-        </p>
+       
       </div>
 
       {/* Dismiss */}
@@ -593,7 +593,7 @@ export function NotificationBell() {
   };
 
   return (
-    <FloatingPanelRoot className="!relative !flex !justify-center !items-center">
+    <FloatingPanelRoot className="!relative !flex !justify-center !items-center ">
       {/* Bell Button */}
       <FloatingPanelTrigger
         
@@ -611,7 +611,7 @@ export function NotificationBell() {
       {/* Dropdown Panel */}
       
         <FloatingPanelContent
-          className=" !-ml-80 w-[350px] max-h-[540px] dark:bg-[#111] rounded-[14px] shadow-[0_20px_60px_rgba(0,0,0,0.15),0_4px_12px_rgba(0,0,0,0.08)] border !z-[999] flex flex-col overflow-hidden"
+          className=" !-ml-96 w-[390px] max-h-[540px] dark:bg-[#111] rounded-[14px] shadow-[0_20px_60px_rgba(0,0,0,0.15),0_4px_12px_rgba(0,0,0,0.08)] border !z-[999] flex flex-col overflow-hidden h-[500px] text-foreground items-start !gap-y-1"
         >
           {/* Header */}
           <div className="px-[18px] py-4  flex items-center justify-between  shrink-0">
@@ -636,7 +636,7 @@ export function NotificationBell() {
           </div>
 
           {/* List */}
-          <div className="overflow-y-auto flex-1">
+          <div className="overflow-y-auto scrollbar-thin2 py-2 overflow-x-hidden !space-y-1 flex-1 px-1.5">
             {isLoading && notifications.length === 0 ? (
               <div className="py-10 text-center text-gray-400">
                 <div className="text-[28px] mb-2">⏳</div>
@@ -655,6 +655,7 @@ export function NotificationBell() {
                 <NotificationItem
                   key={n.id}
                   notification={n}
+                  onClick={() => handleOpen(n.id)}
                   onRead={() => markRead(n.id)}
                   onDismiss={() => dismiss(n.id)}
                 />
@@ -664,7 +665,7 @@ export function NotificationBell() {
 
           {/* Footer */}
           {notifications.length > 0 && (
-            <FloatingPanelFooter className="px-4 py-2.5 border-t border-gray-100 flex justify-center shrink-0">
+            <FloatingPanelFooter className="px-4 py-2.5 border-t border-gray-100 dark:border-[#222] flex justify-center shrink-0">
               <button type="button"
                 onClick={() => fetchMore(2)}
                 disabled={isLoading}

@@ -16,10 +16,10 @@ export function RecordingBar() {
   };
 
   return (
-    <div className="fixed top-4 right-4 z-[9999] flex items-center gap-3 bg-zinc-900/90 backdrop-blur-md text-white px-4 py-2 rounded-full shadow-xl border border-zinc-700/50">
-      <div className="flex items-center gap-2">
+    <div className="w-fit flex !relative items-center gap-1 bg-zinc-900/90 backdrop-blur-md text-white px-1 py-0.5 rounded-sm shadow-sm border border-zinc-700/50">
+      <div className="flex items-center gap-1">
         <div className={cn(
-          "size-2.5 rounded-full",
+          "size-1 rounded-full",
           isPaused ? "bg-yellow-400" : "bg-red-500 animate-pulse"
         )} />
         <span className="text-sm font-semibold tabular-nums tracking-wide">
@@ -31,23 +31,23 @@ export function RecordingBar() {
 
       <button
         onClick={isPaused ? resumeRecording : pauseRecording}
-        className="hover:bg-zinc-700 rounded-md p-1.5 transition-colors"
+        className="hover:bg-zinc-700 rounded-md p-1 transition-colors"
         title={isPaused ? 'Resume (Ctrl+Alt+P)' : 'Pause (Ctrl+Alt+P)'}
       >
-        {isPaused ? <Play className="size-4 fill-current" /> : <Pause className="size-4 fill-current" />}
+        {isPaused ? <Play className="size-3 fill-current" /> : <Pause className="size-3 fill-current" />}
       </button>
 
       <button
         onClick={stopRecording}
-        className="hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded-md p-1.5 transition-colors"
+        className="hover:bg-red-500/20 text-red-400 hover:text-red-300 rounded-md p-1 transition-colors"
         title="Stop recording (Ctrl+Alt+S)"
       >
-        <Square className="size-4 fill-current" />
+        <Square className="size-3 fill-current" />
       </button>
 
-      <span className="text-xs text-zinc-400 hidden sm:inline font-medium">
+      {/* <span className="text-xs text-zinc-400 hidden sm:inline font-medium">
         {isPaused ? 'Paused' : 'Recording...'}
-      </span>
+      </span> */}
     </div>
   );
 }

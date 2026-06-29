@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { Sun } from 'lucide-react';
 import { FamilyButtonDemo } from '@/components/ui/multiButton';
 import DashMusic from '../music/dashMusic';
-import MusicProvider from '@/components/music-components/music-provider';
 import { UserTask } from 'interfaces/task';
 import { DashboardTaskList } from '@/components/tasks/dashboard-task-list';
 import Image from 'next/image';
@@ -474,6 +473,7 @@ const Dashboard = () => {
 
             <div className="w-full">
               <Player />
+              {/* <DashMusic/> */}
             </div>
 
             <FloatingPanelRoot className="flex w-full h-3/3 shadow-md  justify-center dark:border-[#171717] border items-center bg-gray-50 dark:bg-neutral-950 rounded-[14px] flex-col">

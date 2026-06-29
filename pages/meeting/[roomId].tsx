@@ -169,6 +169,109 @@ function WallLoader({ text = 'Taking you to the Universe' }: { text?: string }) 
         </div>
       </div>
 
+      <style jsx global>{`
+        .wall {
+          background: url(https://i.pinimg.com/736x/82/fe/3e/82fe3ef47c4eace70c45aa1639de4fd8.jpg);
+          background-size: cover;
+          background-position: center;
+        }
+
+        .scene {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          perspective: 5px;
+          perspective-origin: 50% 50%;
+          overflow: hidden;
+        }
+
+        .wrap {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 2000px;
+          height: 2000px;
+          margin-top: -1000px;
+          margin-left: -1000px;
+          transform-style: preserve-3d;
+          animation: move 12s infinite linear;
+          animation-fill-mode: forwards;
+        }
+
+        .wrap:nth-child(2) {
+          animation: move 12s infinite linear;
+          animation-delay: 6s;
+        }
+
+        .wall {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 2000px;
+          height: 2000px;
+          opacity: 0;
+          animation: fade 12s infinite linear;
+        }
+
+        .wrap:nth-child(2) .wall {
+          animation-delay: 6s;
+        }
+
+        .wall-right {
+          transform: rotateY(90deg) translateZ(1000px);
+        }
+        .wall-right-right {
+          transform: rotateY(90deg) translateZ(1020px);
+        }
+        .wall-left {
+          transform: rotateY(-90deg) translateZ(1000px);
+        }
+        .wall-left-left {
+          transform: rotateY(-90deg) translateZ(1020px);
+        }
+        .wall-top {
+          transform: rotateX(90deg) translateZ(1000px);
+        }
+        .wall-bottom {
+          transform: rotateX(-90deg) translateZ(1000px);
+        }
+        .wall-back {
+          transform: rotateX(180deg) translateZ(1000px);
+        }
+        .wall-top-top {
+          transform: rotateX(90deg) translateZ(1020px);
+        }
+        .wall-bottom-bottom {
+          transform: rotateX(-90deg) translateZ(1020px);
+        }
+
+        @keyframes move {
+          0% {
+            transform: translateZ(-500px) rotate(0deg);
+          }
+          100% {
+            transform: translateZ(500px) rotate(0deg);
+          }
+        }
+
+        @keyframes fade {
+          0% {
+            opacity: 0;
+          }
+          25% {
+            opacity: 1;
+          }
+          75% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+          }
+        }
+      `}</style>
+
       <div className="absolute inset-0 flex flex-col justify-center items-center text-center z-10">
         <span className="text-4xl md:text-4xl lg:text-5xl font-semibold max-w-7xl mx-auto text-center text-neutral-800 dark:text-white">
           {text}
@@ -277,106 +380,3 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   };
 };
 
-
-{/* <style jsx global>{`
-        .wall {
-          background: url(https://i.pinimg.com/736x/82/fe/3e/82fe3ef47c4eace70c45aa1639de4fd8.jpg);
-          background-size: cover;
-          background-position: center;
-        }
-
-        .scene {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          perspective: 5px;
-          perspective-origin: 50% 50%;
-          overflow: hidden;
-        }
-
-        .wrap {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 2000px;
-          height: 2000px;
-          margin-top: -1000px;
-          margin-left: -1000px;
-          transform-style: preserve-3d;
-          animation: move 12s infinite linear;
-          animation-fill-mode: forwards;
-        }
-
-        .wrap:nth-child(2) {
-          animation: move 12s infinite linear;
-          animation-delay: 6s;
-        }
-
-        .wall {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 2000px;
-          height: 2000px;
-          opacity: 0;
-          animation: fade 12s infinite linear;
-        }
-
-        .wrap:nth-child(2) .wall {
-          animation-delay: 6s;
-        }
-
-        .wall-right {
-          transform: rotateY(90deg) translateZ(1000px);
-        }
-        .wall-right-right {
-          transform: rotateY(90deg) translateZ(1020px);
-        }
-        .wall-left {
-          transform: rotateY(-90deg) translateZ(1000px);
-        }
-        .wall-left-left {
-          transform: rotateY(-90deg) translateZ(1020px);
-        }
-        .wall-top {
-          transform: rotateX(90deg) translateZ(1000px);
-        }
-        .wall-bottom {
-          transform: rotateX(-90deg) translateZ(1000px);
-        }
-        .wall-back {
-          transform: rotateX(180deg) translateZ(1000px);
-        }
-        .wall-top-top {
-          transform: rotateX(90deg) translateZ(1020px);
-        }
-        .wall-bottom-bottom {
-          transform: rotateX(-90deg) translateZ(1020px);
-        }
-
-        @keyframes move {
-          0% {
-            transform: translateZ(-500px) rotate(0deg);
-          }
-          100% {
-            transform: translateZ(500px) rotate(0deg);
-          }
-        }
-
-        @keyframes fade {
-          0% {
-            opacity: 0;
-          }
-          25% {
-            opacity: 1;
-          }
-          75% {
-            opacity: 1;
-          }
-          100% {
-            opacity: 0;
-          }
-        }
-      `}</style> */}

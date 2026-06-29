@@ -1283,6 +1283,7 @@ import { Slider, SliderRange, SliderThumb, SliderTrack } from "./ui/slider";
 import { SongMoreMenu } from "./song-more-menu";
 import { Queue } from "./queue";
 import { Skeleton } from "../ui/skeleton";
+import Link from "next/link";
 
 function formatDuration(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -1562,10 +1563,35 @@ export function Player() {
 
   const VolumeIcon = muted || volume === 0 ? VolumeX : volume < 0.3 ? Volume : volume < 0.7 ? Volume1 : Volume2;
 
-  if (!currentSong) return null;
+    // ═══════════════════════════════════════════════════════════════════════════════
+  // NULL CHECK: Dashboard shows empty state, others hide completely
+  // ═══════════════════════════════════════════════════════════════════════════════
+  if (!currentSong) {
+    if (!isDashboard) return null;
+    
+    // Dashboard empty state only
+    return (
+      <div className="flex flex-col justify-between items-center gap-3 bg-gray-50 dark:bg-neutral-950 px-6 py-3 rounded-[14px] w-full max-w-xl mx-auto shadow-md">
+        <img
+          className="h-20 w-20 rounded-lg"
+          src="https://i.scdn.co/image/ab67616d0000b27354e544672baa16145d67612b"
+          alt="Default Music"
+        />
+        <div className="flex text-center flex-col flex-1">
+          <p className="text-[16px] font-bold">No music playing</p>
+        </div>
+        <Link
+          href="/music"
+          className="text-sm bg-blue-600 text-white px-4 py-1.5 rounded-md hover:bg-blue-700 transition"
+        >
+          Play Music
+        </Link>
+      </div>
+    );
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // DASHBOARD VIEW
+  // DASHBOARD VIEW (currentSong is guaranteed to exist here)
   // ═══════════════════════════════════════════════════════════════════════════════
   if (isDashboard) {
     return (
@@ -1622,7 +1648,6 @@ export function Player() {
       </div>
     );
   }
-
   // ═══════════════════════════════════════════════════════════════════════════════
   // EXPANDED VIEW
   // ═══════════════════════════════════════════════════════════════════════════════

@@ -104,7 +104,7 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
                           {getLayout(content)}
                           <ScreenShareConsentModal />
                           <Toaster toastOptions={{ duration: 3000 }} />
-                          <RecordingBar />
+                          {/* <RecordingBar /> */}
                           <UploadPopup />
                           {/* <ConferioAI/> */}
                           {/* <IntroDisclosureDemo/> */}

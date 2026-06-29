@@ -5,7 +5,7 @@ import { TimerState } from 'types/timeTracking';
 
 const INACTIVITY_THRESHOLD = 30 * 60 * 1000; // 30 minutes
 // const INACTIVITY_THRESHOLD = 1 * 60 * 1000; // 1 minute
-const ACTIVITY_CHECK_INTERVAL = 5000; // Check every 5 seconds
+const ACTIVITY_CHECK_INTERVAL = 9000; // Check every 5 seconds
 
 export function useTimer() {
   const { data: session } = useSession();

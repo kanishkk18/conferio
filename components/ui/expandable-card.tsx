@@ -35,6 +35,7 @@ export function ExpandableCard({
   const id = React.useId()
    const [isPlaying, setIsPlaying] = useState(false)
     const videoRef = useRef<HTMLVideoElement>(null)
+    const [clips, setClips] = useState<Clip[] | null>()
   
     const handlePlayPause = () => {
       if (videoRef.current) {
@@ -179,7 +180,7 @@ export function ExpandableCard({
                 animate={{ rotate: active ? 45 : 0 }}
                 transition={{ duration: 0.4 }}
               >
-             {clip && <ClipMenu clip={clip} onUpdate={onUpdate} />} 
+             {clip && <ClipMenu  key={clip.id} clip={clip} onUpdate={() => setClips(prev => prev ? prev.filter(c => c.id !== clip.id) : null)} />} 
              </motion.div>
             </motion.button>
 
