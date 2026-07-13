@@ -401,24 +401,7 @@ export function TaskForm(props: { children?: React.ReactNode }) {
                   </SelectContent>
                 </Select>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      className="w-fit px-1.5 !py-1 h-fit justify-start text-left font-medium shadow-none dark:bg-[#111111] overflow-hidden text-xs"
-                      aria-label="Open edit menu"
-                    >
-                      <EllipsisIcon size={16} aria-hidden="true" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem>Option 1</DropdownMenuItem>
-                    <DropdownMenuItem>Option 2</DropdownMenuItem>
-                    <DropdownMenuItem>Option 3</DropdownMenuItem>
-                    <DropdownMenuItem>Option 4</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+               
               </div>
             </ModalContent>
             <ModalFooter className="dark:bg-neutral-950 mt-auto">
