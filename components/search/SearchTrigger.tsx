@@ -24,33 +24,10 @@ export function SearchTrigger() {
 
   return (
     <>
-      {/* <div className=" h-full pt-1" onClick={() => setOpen(true)}>
-        <div className="relative h-full flex justify-start items-center  rounded-lg">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4text-muted-foreground" />
-          <Input type="search" placeholder="Search..." />
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-          
-            <kbd style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '2px',
-          fontSize: '10px',
-          fontWeight: 600,
-          padding: '1px 5px',
-          backgroundColor: '#fff',
-          color: '#9CA3AF',
-          borderRadius: '4px',
-          border: '1px solid #E5E7EB',
-          fontFamily: 'monospace',
-        }}>
-          <span style={{ fontSize: '12px' }}>⌘</span>K
-        </kbd>
-          </div>
-        </div>
-      </div> */}
        <div className=" min-w-[300px]" onClick={() => setOpen(true)}>
       <div className="relative rounded-3xl border border-[#E8E8E8] dark:!border-[#313131] overflow-hidden">
-        <Input  className="peer pe-9 ps-9 py-0 h-[1.9rem] dark:bg-[#2A2A2A] text-[#BEBEBE] border-none " placeholder="Search..." type="search" />
+        <Input  className="peer pe-9 ps-9 py-0 h-[1.9rem] dark:bg-[#2A2A2A] text-[#BEBEBE] border-none " placeholder="Search..." 
+         type="search" />
         <div className="pointer-events-none absolute inset-y-0 start-0 rounded-2xl flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
           <Search size={16} strokeWidth={2} className="dark:text-[#BEBEBE]"/>
         </div>
@@ -64,7 +41,6 @@ export function SearchTrigger() {
       </div>
     </div>
       
-
       <SearchModal open={open} onClose={() => setOpen(false)} />
     </>
   )

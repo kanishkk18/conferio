@@ -27,17 +27,27 @@ import 'ldrs/react/LineSpinner.css'
 import 'styles/whiteboard.css'
 // import ConferioAI from '@/components/ai/ConferioAI';
 import { RecordingProvider } from 'contexts/RecordingContext';
-import { RecordingBar } from '@/components/clips/RecordingBar';
 import { UploadPopup } from '@/components/clips/UploadPopup';
 import { MusicLayout } from '@/components/music/music-layout';
 import { useScreenTime } from 'hooks/useScreenTime';
 import { IntroDisclosureDemo } from '@/components/ui/IntroDisclosureDemo';
+import { useSyncTeamFromUrl } from 'hooks/useSyncTeamFromUrl';
 
 
 function LocationBroadcaster() {
   useBroadcastLocation();
   return null;
 }
+
+function TeamSyncWrapper({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const urlSlug = router.query.slug as string | undefined;
+  
+  useSyncTeamFromUrl(urlSlug);
+  
+  return <>{children}</>;
+}
+
 
 function MyApp({ Component, pageProps }: AppPropsWithLayout) {
   const { session, ...props } = pageProps;
@@ -91,12 +101,12 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
               disableTransitionOnChange>
               <NotificationProvider>
                 <ScreenShareProvider>
-                  <NextContext.Provider
-                    value={{ nextData: { id: 'O94kBTtw', name: 'Chuttamalle' } }}>
                     <MusicProvider>
                       <SocketProvider>
                         <CallProvider>
                           <RecordingProvider>
+                                                        <TeamSyncWrapper> 
+
                           <NotificationToastContainer />
                           <LocationBroadcaster />
                           <GlobalCallOverlay />
@@ -104,15 +114,14 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
                           {getLayout(content)}
                           <ScreenShareConsentModal />
                           <Toaster toastOptions={{ duration: 3000 }} />
-                          {/* <RecordingBar /> */}
                           <UploadPopup />
                           {/* <ConferioAI/> */}
                           {/* <IntroDisclosureDemo/> */}
+                          </TeamSyncWrapper>
                         </RecordingProvider>
                         </CallProvider>
                       </SocketProvider>
                     </MusicProvider>
-                  </NextContext.Provider>
                 </ScreenShareProvider>
               </NotificationProvider>
             </ThemeProvider>

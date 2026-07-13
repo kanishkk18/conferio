@@ -109,7 +109,7 @@ import { useDropzone } from 'react-dropzone';
 import { Progress } from '@/components/ui/progress';
 import { Upload, File, ImageIcon, Video, Music } from 'lucide-react';
 import { formatBytes } from '@/lib/utils';
-import { FileUploadCard } from '../file-manager/components/FileUploadCard';
+// import { FileUploadCard } from '../file-manager/components/FileUploadCard';
 import { ScrollArea } from '../ui/scroll-area';
 import { useSession } from 'next-auth/react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -965,7 +965,7 @@ function TaskForm(props: { children?: React.ReactNode }) {
               />
 
               <div className="relative z-10 flex items-start justify-center h-full px-4">
-                <FileUploadCard />
+                {/* <FileUploadCard /> */}
               </div>
             </div>
           </TabsContent>

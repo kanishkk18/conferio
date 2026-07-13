@@ -57,7 +57,7 @@ import { Progress } from '@/components/ui/progress';
 import { Upload, X, File, ImageIcon, Video, Music } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatBytes } from '@/lib/utils';
-import { FileUploadCard } from '../file-manager/components/FileUploadCard';
+import {  UnifiedFileUploader } from '../file-manager/components/FileUploadCard';
 import { ScrollArea } from '../ui/scroll-area';
 import CreateEvent from 'pages/events/create/page';
 import { useSession } from 'next-auth/react';
@@ -90,6 +90,8 @@ export function TaskForm(props: { children?: React.ReactNode }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: session, status } = useSession();
+  const [open, setOpen] = useState(false);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -192,7 +194,7 @@ export function TaskForm(props: { children?: React.ReactNode }) {
     setFiles((prev) => [...prev, ...filesWithPreview]);
   }, []);
 
-  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive} = useDropzone({
     onDrop,
     multiple: true,
     accept: {
@@ -286,9 +288,6 @@ export function TaskForm(props: { children?: React.ReactNode }) {
     );
   }
 
-  if (status === 'unauthenticated') {
-    return null;
-  }
 
   return (
     <Tabs defaultValue="task" className="">
@@ -302,10 +301,10 @@ export function TaskForm(props: { children?: React.ReactNode }) {
           {children}
         </ModalTrigger>
         <ModalBody className=" !max-w-[46%] !min-h-[65%] !h-[70%] !max-h-[90%] dark:bg-neutral-900 !w-[46%]">
-          <TabsList className="h-auto gap-3 rounded-none bg-transparent p-0 pt-2 px-4">
+          <TabsList className="h-auto gap-3 rounded-none !bg-transparent p-0 pt-2 px-4">
             <TabsTrigger
               value="task"
-              className="relative rounded-none py-2 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
+              className="relative !bg-transparent rounded-none py-2 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
             >
               Task
             </TabsTrigger>
@@ -336,13 +335,12 @@ export function TaskForm(props: { children?: React.ReactNode }) {
           </TabsList>
           <Separator />
           <TabsContent value="task" className=" flex flex-col ">
-            <ModalContent className="!px-6 gap-y-4 pb-0">
+            <ModalContent className="!px-6 space-y-4 pb-0">
               <div className="flex justify-start items-center gap-2">
                 <DropDownCategory
                   categoryToSend={category}
                   setCategory={setCategory}
                 />
-
                 <Select>
                   <SelectTrigger className="w-fit px-1.5 !py-1 h-fit justify-start text-left font-medium shadow-none dark:bg-[#111111] overflow-hidden text-xs">
                     <Disc2 className="h-4 w-4 mr-1" />{' '}
@@ -375,80 +373,6 @@ export function TaskForm(props: { children?: React.ReactNode }) {
               </div>
 
               <div className="flex justify-start items-center gap-2 ">
-                <Select defaultValue="3">
-                  <SelectTrigger className="w-fit px-1.5 !py-1 h-fit justify-start text-left font-medium shadow-none dark:bg-[#111111] overflow-hidden text-xs">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent className="[&_*[role=option]]:ps-2 [&_*[role=option]]:pe-8 [&_*[role=option]>span]:start-auto [&_*[role=option]>span]:end-2 [&_*[role=option]>span]:flex [&_*[role=option]>span]:items-center [&_*[role=option]>span]:gap-2 [&_*[role=option]>span>svg]:shrink-0 [&_*[role=option]>span>svg]:text-muted-foreground/80">
-                    <SelectItem value="1">
-                      <span className="flex items-center gap-2">
-                        <StatusDot className="text-emerald-600" />
-                        <span className="truncate">Completed</span>
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="2">
-                      <span className="flex items-center gap-2">
-                        <StatusDot className="text-blue-500" />
-                        <span className="truncate">In Progress</span>
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="3">
-                      <span className="flex items-center gap-2">
-                        <StatusDot className="text-amber-500" />
-                        <span className="truncate">To Do</span>
-                      </span>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select>
-                  <SelectTrigger className="w-fit !px-1.5 dark:!text-white !py-1 h-fit justify-start text-left font-medium shadow-none dark:bg-[#111111] !text-black overflow-hidden text-xs">
-                    <SelectValue placeholder="Assignee" className='!text-white' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel className="text-xs py-1 font-normal text-muted-foreground ps-2">
-                        Select a user
-                      </SelectLabel>
-                      <SelectItem value="1">
-                        <span className="flex items-center gap-2">
-                          <Avatar className="size-6">
-                            <AvatarImage src="" alt="@reui" />
-                            <AvatarFallback>AB</AvatarFallback>
-                          </Avatar>
-                          <span>Alan Bold</span>
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="2">
-                        <span className="flex items-center gap-2">
-                          <Avatar className="size-6">
-                            <AvatarImage src="" alt="@reui" />
-                            <AvatarFallback>EJ</AvatarFallback>
-                          </Avatar>
-                          <span>Ethan James</span>
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="3">
-                        <span className="flex items-center gap-2">
-                          <Avatar className="size-6">
-                            <AvatarImage src="" alt="@reui" />
-                            <AvatarFallback>NK</AvatarFallback>
-                          </Avatar>
-                          <span>Nina Clark</span>
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="4">
-                        <span className="flex items-center gap-2">
-                          <Avatar className="size-6">
-                            <AvatarImage src="" alt="@reui" />
-                            <AvatarFallback>JA</AvatarFallback>
-                          </Avatar>
-                          <span>Sean Otto</span>
-                        </span>
-                      </SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
 
                 {/* <PopoverDatePicker date={createdAt} setDate={setCreatedAt} /> */}
                 <PopoverDatePicker date={dueTime} setDate={setDueTime} />
@@ -624,17 +548,17 @@ export function TaskForm(props: { children?: React.ReactNode }) {
                 className="absolute !-bottom-24 object-cover left-1/2 -translate-x-1/2 w-full h-full "
               />
 
-              <div className="relative z-10 flex items-start justify-center h-full px-4">
-                <FileUploadCard />
+              <div className="relative z-10 flex items-start justify-center h-full w-full px-4">
+                    <UnifiedFileUploader open={open} onClose={() => setOpen(false)} />
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="event" className="h-full w-full">
+          <TabsContent value="event" className="h-full w-full !py-0">
             <ScrollArea className="min-h-screen !h-screen !overflow-y-auto w-full py-0">
               <form
                 onSubmit={handleSubmit}
-                className="!w-full !px-0 flex flex-col justify-between min-h-full !h-full"
+                className="!w-full !px-0 flex flex-col justify-between !h-full"
               >
                 <div className="space-y-6 !w-full py-6 !px-12 min-w-full">
                   <div className="group relative">
@@ -693,7 +617,7 @@ export function TaskForm(props: { children?: React.ReactNode }) {
                   </div>
 
                   <div>
-                    <div className="block text-sm font-medium text-gray-700 mb-2">
+                    <div className="block bg-transparent text-sm font-medium text-gray-700 mb-2">
                       Location Type *
                     </div>
                     <div className="flex justify-start items-center gap-4">
@@ -703,7 +627,7 @@ export function TaskForm(props: { children?: React.ReactNode }) {
                           onClick={() =>
                             setFormData({ ...formData, locationType: opt.id })
                           }
-                          className={`cursor-pointer w-24 h-20 p-0 flex justify-center items-center  transition-all ${
+                          className={`cursor-pointer w-24 h-20 p-0 flex justify-center items-center bg-[#080808] transition-all ${
                             formData.locationType === opt.id
                               ? 'border border-blue-600 shadow-lg'
                               : 'border'
@@ -738,9 +662,11 @@ export function TaskForm(props: { children?: React.ReactNode }) {
                     </div>
                   )}
                 </div>
-                <div className="dark:bg-neutral-950 bg-gray-100 !mt-auto flex justify-end px-6 items-end h-full py-5">
+                <div className="dark:bg-neutral-950 bg-gray-100 !mt-auto flex justify-end sticky bottom-0 px-6 items-end h-full py-5">
                   <Button
                     type="submit"
+                    size='sm'
+                    className="dark:bg-white"
                     disabled={createEventMutation.isPending}
                   >
                     {createEventMutation.isPending ? 'Creating...' : 'Create'}

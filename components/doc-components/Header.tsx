@@ -212,7 +212,7 @@ export function Header({ className }: { className?: string }) {
     <div className={cn(`h-10 py-1 w-full dark:bg-[#111] bg-[#FCFCFC] border-b border-[#E8E8E8] dark:border-[#222] flex items-center justify-between px-4`, className)}>
       <div className="flex items-center gap-2 flex-1">
         <div className="flex items-center gap-1.5 text-sm">
-          {pageConfig.icon}
+        <span className="p-1 rounded-md border dark:border-[#505457] bg-gray-50 dark:bg-[#303030]">{pageConfig.icon}</span>  
           <span className="text-foreground font-medium">{pageConfig.label}</span>
         </div>
       </div>

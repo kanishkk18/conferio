@@ -89,11 +89,11 @@ export const DesktopSidebar = ({
     <>
       <motion.div
         className={cn(
-          "h-full px-3.5 py-2 hidden md:flex md:flex-col bg-neutral-100 dark:bg-[#181818] w-[100px] flex-shrink-0",
+          "h-full px-3 py-2 hidden md:flex md:flex-col bg-neutral-100 dark:bg-[#121212] w-[100px] flex-shrink-0 border-r dark:border-[#272A2B]",
           className
         )}
         animate={{
-          width: animate ? (open ? "260px" : "55px") : "300px",
+          width: animate ? (open ? "240px" : "50px") : "250px",
         }}
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
@@ -115,7 +115,7 @@ export const MobileSidebar = ({
     <>
       <div
         className={cn(
-          "h-10   p-4  flex flex-row md:hidden  items-center justify-between bg-neutral-100 dark:bg-neutral-900 w-full"
+          "h-10 p-4 flex flex-row md:hidden items-center justify-between bg-neutral-100 dark:bg-neutral-900 w-full"
         )}
         {...props}
       >
@@ -169,7 +169,7 @@ export const SidebarLink = ({
     <Link
       href={link.href}
       className={cn(
-        "flex items-center justify-start gap-2 group/sidebar py-1",
+        "flex items-center ml-1 justify-start gap-2 group/sidebar py-1 dark:text-[#6E6E6E]",
         className
       )}
       {...props}
@@ -181,7 +181,7 @@ export const SidebarLink = ({
           display: animate ? (open ? "inline-block" : "none") : "inline-block",
           opacity: animate ? (open ? 1 : 0) : 1,
         }}
-        className="text-neutral-700 dark:text-white/70 text-sm font-[500] group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
+        className="text-neutral-700 dark:text-[#EEEFF1] text-xs font-[500] group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
       >
         {link.label}
       </motion.span>

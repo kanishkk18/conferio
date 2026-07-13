@@ -14,7 +14,8 @@ import { AlarmClock } from '../animate-ui/icons/alarm-clock'
 import { Clock3 } from '../animate-ui/icons/clock-3'
 import { SquareKanban } from '../animate-ui/icons/square-kanban'
 import HashtagIcon from '../ui/hashtag-icon'
-import { CalendarClock, X } from 'lucide-react'
+import { CalendarClock, Search, X } from 'lucide-react'
+import { Input } from '../ui/input'
 
 // ── Category tabs ─────────────────────────────────────────────────────────
 const CATEGORIES: { id: SearchCategory; label: string; icon: JSX.Element }[] = [
@@ -282,13 +283,13 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
           </svg>
 
-          <input
+          <Input
           aria-label="search"
-            ref={inputRef}
+           ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search tasks, boards, pages, files, meetings…"
-            className="flex-1 border-none bg-transparent text-[15px] dark:text-[#EEE] text-gray-900 font-inherit outline-none"
+            className="flex-1 border-none text-sm !outline-none bg-transparent text-[15px] dark:text-[#EEE] text-gray-900 font-inherit "
           />
 
           {/* Loading spinner */}
@@ -307,20 +308,20 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
           )}
 
           {/* ESC badge */}
-          <kbd className="text-xs font-semibold px-[6px] py-[2px] bg-gray-100 text-gray-500 rounded border border-gray-200 font-mono shrink-0">
+          <kbd className="text-xs font-semibold px-[6px] py-[2px] bg-gray-100 dark:bg-[#2A2A2A] text-gray-500 dark:text-[#BEBEBE] rounded border border-gray-200 dark:border-[#444] font-mono shrink-0">
             ESC
           </kbd>
         </div>
 
         {/* Category Tabs */}
-        <div className="flex gap-x-[6px] px-3 py-2 overflow-x-auto scrollbar-none">
+        <div className="flex gap-x-[6px] px-3 py-2 overflow-x-auto thin-scrollbar">
           {CATEGORIES.map((cat) => (
             <button type="button"
               key={cat.id}
               onClick={() => setCategory(cat.id)}
               className={`
                 flex items-center dark:text-[#B4B4B4] border dark:border-[#444] gap-[5px] px-[10px] py-[5px] rounded-full cursor-pointer text-xs whitespace-nowrap transition-colors duration-100 font-inherit
-                ${category === cat.id ? 'font-semibold text-blue-700 bg-blue-50' : 'font-normal text-gray-500 bg-transparent'}
+                ${category === cat.id ? 'font-semibold text-blue-700 bg-blue-50 dark:bg-[#333]' : 'font-normal text-gray-500 bg-transparent'}
               `}
             >
               <span className="text-[13px] ">{cat.icon}</span>
@@ -362,7 +363,7 @@ export function SearchModal({ open, onClose }: SearchModalProps) {
           {/* Empty query, no recent */}
           {!query && recentSearches.length === 0 && (
             <div className="px-5 py-10 text-center text-gray-400">
-              <div className="text-[32px] mb-2">🔍</div>
+              <div className="text-[32px] mb-2"><Search className='size-6 mx-auto '/></div>
               <p className="text-[13.5px] font-medium text-gray-700 mb-1">
                 Search everything
               </p>

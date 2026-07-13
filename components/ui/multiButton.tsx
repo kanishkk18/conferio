@@ -1865,7 +1865,7 @@ const CollapsedPreview = ({
     );
   }
 
- const preview = messages.slice(-7);
+ const preview = messages.slice(-6);
 return (
   <div className="flex flex-col justify-end px-2 py-2 gap-1 overflow-x-auto overflow-y-auto">
     {channel && (
