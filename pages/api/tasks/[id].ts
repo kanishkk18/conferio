@@ -1,9 +1,12 @@
-// // pages/api/tasks/[id].ts
+
+
 // import type { NextApiRequest, NextApiResponse } from 'next';
 // import { getServerSession } from 'next-auth/next';
 // import { authOptions } from '../../../lib/auth';
 // import { prisma } from '../../../lib/prisma';
 // import { getIO } from '../../../lib/socket-store';
+// import { broadcastClipEvent, SSE_EVENTS } from '@/lib/sse';
+
 
 // export default async function handler(req: NextApiRequest, res: NextApiResponse) {
 //   const session = await getServerSession(req, res, authOptions);
@@ -26,7 +29,6 @@
 //     return res.status(404).json({ error: 'User not found' });
 //   }
 
-//   // Get task with board info
 //   const task = await prisma.task.findUnique({
 //     where: { id },
 //     include: { column: { include: { board: true } } },
@@ -84,12 +86,32 @@
 
 //     case 'PUT':
 //       try {
-//         const { title, description, columnId, priority, dueDate, status, coverImage, isArchived, order } =
-//           req.body;
+//         const {
+//           title,
+//           description,
+//           columnId,
+//           priority,
+//           dueDate,
+//           status,
+//           coverImage,
+//           isArchived,
+//           order,
+//         } = req.body;
 
+//         // ✅ Fetch the old task state AND column names before updating
 //         const oldTask = await prisma.task.findUnique({
 //           where: { id },
-//           select: { columnId: true, status: true, title: true, boardId: true },
+//           select: {
+//             title: true,
+//             columnId: true,
+//             priority: true,
+//             status: true,
+//             dueDate: true,
+//             coverImage: true,
+//             boardId: true,
+//             isArchived: true,
+//             column: { select: { title: true } },
+//           },
 //         });
 
 //         if (!oldTask) return res.status(404).json({ error: 'Task not found' });
@@ -101,7 +123,7 @@
 //             description,
 //             columnId,
 //             priority,
-//             dueDate: dueDate ? new Date(dueDate) : null,
+//             dueDate: dueDate !== undefined ? (dueDate ? new Date(dueDate) : null) : undefined,
 //             status,
 //             coverImage,
 //             isArchived,
@@ -109,9 +131,7 @@
 //           },
 //           include: {
 //             assignees: {
-//               include: {
-//                 user: { select: { id: true, name: true, image: true } },
-//               },
+//               include: { user: { select: { id: true, name: true, image: true } } },
 //             },
 //             labels: { include: { label: true } },
 //             attachments: true,
@@ -120,51 +140,160 @@
 //           },
 //         });
 
-//         // ✅ EMIT TO BOARD ROOM — all members get this immediately
-//         const io = getIO();
-//         if (io) {
-//           const isColumnChanged = columnId && columnId !== oldTask.columnId;
-
-//           if (isColumnChanged) {
-//             console.log('[API] Emitting task_moved to board:', oldTask.boardId);
-//             io.to(`board:${oldTask.boardId}`).emit('task_moved', {
-//               taskId: id,
-//               fromColumnId: oldTask.columnId,
-//               toColumnId: columnId,
-//               task: updatedTask,
-//               boardId: oldTask.boardId,
-//             });
-//           } else {
-//             console.log('[API] Emitting task_updated to board:', oldTask.boardId);
-//             io.to(`board:${oldTask.boardId}`).emit('task_updated', {
-//               task: updatedTask,
-//               boardId: oldTask.boardId,
-//             });
-//           }
+//         const isColumnChanged = columnId && columnId !== oldTask.columnId;
+//         if (isColumnChanged) {
+//           broadcastClipEvent(SSE_EVENTS.TASK_MOVED, {
+//             type: 'task:moved',
+//             boardId: oldTask.boardId,
+//             taskId: id,
+//             fromColumnId: oldTask.columnId,
+//             toColumnId: columnId,
+//             task: updatedTask,
+//           });
+//         } else {
+//           broadcastClipEvent(SSE_EVENTS.TASK_UPDATED, {
+//             type: 'task:updated',
+//             boardId: oldTask.boardId,
+//             task: updatedTask,
+//           });
 //         }
+//         // ✅ Detect exactly what changed and log each change separately
+//         const taskTitle = title ?? oldTask.title;
 
-//         // Fire-and-forget activity log
-//         const action = columnId && columnId !== oldTask.columnId ? 'MOVED' : 'UPDATED';
-//         prisma.activityLog
-//           .create({
+//         // Column move
+//         if (columnId && columnId !== oldTask.columnId) {
+//           const newColumn = await prisma.column.findUnique({
+//             where: { id: columnId },
+//             select: { title: true },
+//           });
+//           prisma.activityLog.create({
 //             data: {
-//               action,
+//               action: 'MOVED',
 //               entityType: 'TASK',
 //               entityId: id,
-//               description:
-//                 action === 'MOVED'
-//                   ? `Moved task "${title}" to another column`
-//                   : `Updated task "${title}"`,
-//               metadata:
-//                 action === 'MOVED'
-//                   ? { oldColumnId: oldTask.columnId, newColumnId: columnId }
-//                   : undefined,
+//               description: `${user.name} moved "${taskTitle}" from "${oldTask.column.title}" to "${newColumn?.title}"`,
 //               boardId: oldTask.boardId,
 //               taskId: id,
 //               userId: user.id,
+//               metadata: {
+//                 fromColumnId: oldTask.columnId,
+//                 fromColumnTitle: oldTask.column.title,
+//                 toColumnId: columnId,
+//                 toColumnTitle: newColumn?.title,
+//               },
 //             },
-//           })
-//           .catch((err) => console.error('Activity log error:', err));
+//           }).catch(console.error);
+//         }
+
+//         // Title rename
+//         if (title && title !== oldTask.title) {
+//           prisma.activityLog.create({
+//             data: {
+//               action: 'RENAMED',
+//               entityType: 'TASK',
+//               entityId: id,
+//               description: `${user.name} renamed task from "${oldTask.title}" to "${title}"`,
+//               boardId: oldTask.boardId,
+//               taskId: id,
+//               userId: user.id,
+//               metadata: { oldTitle: oldTask.title, newTitle: title },
+//             },
+//           }).catch(console.error);
+//         }
+
+//         // Priority change
+//         if (priority && priority !== oldTask.priority) {
+//           prisma.activityLog.create({
+//             data: {
+//               action: 'PRIORITY_CHANGED',
+//               entityType: 'TASK',
+//               entityId: id,
+//               description: `${user.name} changed priority of "${taskTitle}" from ${oldTask.priority} to ${priority}`,
+//               boardId: oldTask.boardId,
+//               taskId: id,
+//               userId: user.id,
+//               metadata: { from: oldTask.priority, to: priority },
+//             },
+//           }).catch(console.error);
+//         }
+
+//         // Status change
+//         if (status && status !== oldTask.status) {
+//           prisma.activityLog.create({
+//             data: {
+//               action: 'STATUS_CHANGED',
+//               entityType: 'TASK',
+//               entityId: id,
+//               description: `${user.name} changed status of "${taskTitle}" from ${oldTask.status} to ${status}`,
+//               boardId: oldTask.boardId,
+//               taskId: id,
+//               userId: user.id,
+//               metadata: { from: oldTask.status, to: status },
+//             },
+//           }).catch(console.error);
+//         }
+
+//         // Due date change
+//         if (dueDate !== undefined) {
+//           const oldDue = oldTask.dueDate?.toISOString().split('T')[0];
+//           const newDue = dueDate ? new Date(dueDate).toISOString().split('T')[0] : null;
+
+//           if (oldDue !== newDue) {
+//             prisma.activityLog.create({
+//               data: {
+//                 action: 'DUE_DATE_SET',
+//                 entityType: 'TASK',
+//                 entityId: id,
+//                 description: dueDate
+//                   ? `${user.name} set due date of "${taskTitle}" to ${new Date(dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+//                   : `${user.name} removed the due date from "${taskTitle}"`,
+//                 boardId: oldTask.boardId,
+//                 taskId: id,
+//                 userId: user.id,
+//                 metadata: {
+//                   oldDueDate: oldTask.dueDate,
+//                   newDueDate: dueDate || null,
+//                 },
+//               },
+//             }).catch(console.error);
+//           }
+//         }
+
+//         // Archive / restore
+//         if (isArchived !== undefined && isArchived !== oldTask.isArchived) {
+//           prisma.activityLog.create({
+//             data: {
+//               action: isArchived ? 'ARCHIVED' : 'RESTORED',
+//               entityType: 'TASK',
+//               entityId: id,
+//               description: isArchived
+//                 ? `${user.name} archived task "${taskTitle}"`
+//                 : `${user.name} restored task "${taskTitle}"`,
+//               boardId: oldTask.boardId,
+//               taskId: id,
+//               userId: user.id,
+//               metadata: { taskTitle },
+//             },
+//           }).catch(console.error);
+//         }
+
+//         // Cover image change
+//         if (coverImage !== undefined && coverImage !== oldTask.coverImage) {
+//           prisma.activityLog.create({
+//             data: {
+//               action: 'COVER_CHANGED',
+//               entityType: 'TASK',
+//               entityId: id,
+//               description: coverImage
+//                 ? `${user.name} added a cover image to "${taskTitle}"`
+//                 : `${user.name} removed the cover image from "${taskTitle}"`,
+//               boardId: oldTask.boardId,
+//               taskId: id,
+//               userId: user.id,
+//               metadata: { taskTitle },
+//             },
+//           }).catch(console.error);
+//         }
 
 //         return res.status(200).json(updatedTask);
 //       } catch (error) {
@@ -174,29 +303,31 @@
 
 //     case 'DELETE':
 //       try {
+//         // ✅ Log BEFORE deleting so we have the task data
+//         prisma.activityLog.create({
+//           data: {
+//             action: 'DELETED',
+//             entityType: 'TASK',
+//             entityId: id,
+//             description: `${user.name} deleted task "${task.title}"`,
+//             boardId: task.boardId,
+//             // taskId intentionally omitted — task is about to not exist
+//             userId: user.id,
+//             metadata: {
+//               taskTitle: task.title,
+//               columnId: task.columnId,
+//               columnTitle: task.column.title,
+//             },
+//           },
+//         }).catch(console.error);
+
 //         await prisma.task.delete({ where: { id } });
 
-//         // ✅ EMIT TO BOARD ROOM
-//         const io = getIO();
-//         if (io) {
-//           io.to(`board:${task.boardId}`).emit('task_deleted', {
-//             taskId: id,
-//             boardId: task.boardId,
-//           });
-//         }
-
-//         prisma.activityLog
-//           .create({
-//             data: {
-//               action: 'DELETED',
-//               entityType: 'TASK',
-//               entityId: id,
-//               description: `Deleted task "${task.title}"`,
-//               boardId: task.boardId,
-//               userId: user.id,
-//             },
-//           })
-//           .catch((err) => console.error('Activity log error:', err));
+//         broadcastClipEvent(SSE_EVENTS.TASK_DELETED, {
+//           type: 'task:deleted',
+//           boardId: task.boardId,
+//           taskId: id,
+//         });
 
 //         return res.status(204).end();
 //       } catch (error) {
@@ -288,7 +419,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             },
           },
         });
-        return res.status(200).json(fullTask);
+
+        if (!fullTask) {
+          return res.status(404).json({ error: 'Task not found' });
+        }
+
+        // ── Merge in Drive files linked to this task via FileLink ──────────
+        // Legacy uploads land in Task.attachments (Attachment model);
+        // files attached from the unified Drive land in FileLink instead.
+        // Both need to show up in the task modal's attachments list.
+        const fileLinks = await prisma.fileLink.findMany({
+          where: { type: 'TASK', contextId: fullTask.id },
+          include: {
+            file: {
+              include: { user: { select: { id: true, name: true, image: true } } },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        const linkedFiles = fileLinks
+          .filter((l) => l.file && !l.file.isDeleted)
+          .map((l) => ({
+            id: l.file!.id,
+            filename: l.file!.originalName,
+            url: l.file!.url,
+            mimeType: l.file!.mimeType,
+            size: l.file!.size,
+            createdAt: l.file!.createdAt,
+            fromDrive: true,
+            fileLinkId: l.id,
+          }));
+
+        const mergedAttachments = [
+          ...fullTask.attachments,
+          ...linkedFiles.filter(
+            (lf) => !fullTask.attachments.some((a: any) => a.id === lf.id)
+          ),
+        ];
+
+        return res.status(200).json({ ...fullTask, attachments: mergedAttachments });
       } catch (error) {
         return res.status(500).json({ error: 'Failed to fetch task' });
       }

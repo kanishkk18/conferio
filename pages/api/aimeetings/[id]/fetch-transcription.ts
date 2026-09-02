@@ -178,6 +178,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.error('Failed to trigger summary generation:', error);
     }
 
+    // Auto-translate for common languages used in your team
+const commonLanguages = ['hi', 'de', 'pt', 'es']; // Add/remove as needed
+
+try {
+  await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/aimeetings/${id}/translate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ languages: commonLanguages }),
+  });
+  console.log('🌐 Auto-translation triggered for:', commonLanguages);
+} catch (error) {
+  console.error('Auto-translation trigger failed:', error);
+  // Non-blocking — don't fail the whole request
+}
+
     return res.status(200).json({ 
       success: true, 
       source: 'assemblyai',

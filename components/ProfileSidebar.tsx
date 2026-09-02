@@ -9,7 +9,7 @@ import { Team, TeamMember } from '@prisma/client';
 import { AnimateIcon } from "./animate-ui/icons/icon";
 import { ExternalLink } from "./animate-ui/icons/external-link";
 import { MessageSquareText } from "./animate-ui/icons/message-square-text";
-import { LocationMap } from "@/components/ui/expand-map";
+// import { LocationMap } from "@/components/ui/expand-map";
 import { Badge } from "./ui/badge";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { format, addMinutes } from 'date-fns';
@@ -597,14 +597,14 @@ const [selectDetailMember, setSelectDetailMember] = useState<TeamMember | null>(
 
 
           {/* Location */}
-          <div className="mb-4">
+        {/*  <div className="mb-4">
            <LocationMap
     location={`${member.user.name}'s Location`}
     targetUserId={member.user.id}
     isAdmin={!isCurrentUser}
   />
           </div>
-          {/* Shortcuts */}
+           Shortcuts */}
           <div>
             <h3 className="text-sm font-medium mb-3 text-gray-300">Quick Actions</h3>
             <div className="grid grid-cols-3 gap-1">

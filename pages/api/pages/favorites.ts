@@ -27,11 +27,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                   image: true,
                 },
               },
-              workspace: {
-                select: {
-                  name: true,
-                },
-              },
+              // workspace: {
+              //   select: {
+              //     name: true,
+              //   },
+              // },
             },
           },
         },

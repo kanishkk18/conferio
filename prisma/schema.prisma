@@ -82,15 +82,11 @@ model User {
   imageUrl               String?
   files                  File[]
   docFiles               DocFile[]
-  servers                Server[]
-  members                Member[]
-  channels               Channel[]
   clips                  Clip[]
-  memberships            WorkspaceMembership[]
   pagesnts               Comment[]
   pageVersions           PageVersion[]
-  shares                 Page[]
-  comme                  Share[]
+  pages                  Page[]
+  shares                 Share[]
   ownedBoards            Board[]   @relation("BoardOwner")
   memberBoards           BoardMember[]
   assignedTasks          TaskAssignee[]
@@ -127,21 +123,21 @@ model User {
   vmParticipations       VMParticipant[]           @relation("VMParticipants")  
   vmWaitingEntries       VMWaitingEntry[]
   roomsCreated           Room[]   @relation("RoomCreator")
-  uploadedTrack          MusicTrack[]
-  playlists              Playlist[]
-  favourites             MusicFavourite[]
   directMessageReactions TeamDirectMessageReaction[]
   directMessageBookmarks TeamDirectMessageBookmark[]
   voiceAgentSessions     VoiceAgentSession[]
   voiceReminders         VoiceAgentReminder[]
   voiceSettings          UserVoiceSettings?
-  musicFavorites         MusicFavorite[]
-  musicPlaylists         MusicPlaylist[]
-  recentlyPlayed         RecentlyPlayed[]
-  musicPreferences       UserMusicPreferences?
-  uploadedTracks         UploadedTrack[]
   routeViewSessions      RouteViewSession[]
   routeViewAggregates    RouteViewAggregate[]
+  createdChannels        Channel[]        @relation("ChannelCreator")
+  channelInvitesSent     ChannelInvite[]  @relation("ChannelInviteSender")
+  fileLinksCreated       FileLink[]
+  preferredLanguage String @default("en") // 'en', 'hi', 'de', 'pt', etc.
+  
+  meetingTranscripts MeetingTranscript[]
+  // Team-native pages
+  pagesAssignedBy        Page[]   @relation("PageAssignedBy")
 }
 
 model Team {
@@ -164,11 +160,13 @@ model Team {
   conversations   TeamConversation[]
   timeEntries     TimeEntry[]
   manualTimeRequests   ManualTimeRequest[]
-  pages           Page[] 
+  pages           Page[]
+  docFiles        DocFile[]
   screenShareSessions ScreenShareSession[]
   rooms           Room[]
   routeViewSessions    RouteViewSession[]
   routeViewAggregates  RouteViewAggregate[]
+  channels        Channel[]
 
   @@index([billingId])
 }
@@ -186,6 +184,10 @@ model TeamMember {
   conversationsReceived  TeamConversation[] @relation("ParticipantTwo")
   teamDirectMessages     TeamDirectMessage[]
   assignedPages Page[] @relation("AssignedPages")
+  channelMemberships ChannelMember[]
+  sentMessages       Message[]         @relation("MessageSender")
+  messageReactions   MessageReaction[] @relation("MessageReactionSender")
+  threadReplies      ThreadReply[]     @relation("ThreadReplySender")
 
   @@unique([teamId, userId])
   @@index([userId])
@@ -201,7 +203,7 @@ model Invitation {
   expires        DateTime
   invitedBy      String
   createdAt      DateTime @default(now())
-  updatedAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
   allowedDomains String[] @default([])
   sentViaEmail   Boolean  @default(true)
   user           User     @relation(fields: [invitedBy], references: [id], onDelete: Cascade)
@@ -243,7 +245,7 @@ model Subscription {
   endDate    DateTime
   cancelAt   DateTime?
   createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   @@index([customerId])
 }
@@ -256,7 +258,7 @@ model Service {
   name        String
   created     DateTime
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   Price       Price[]
 }
 
@@ -313,7 +315,6 @@ model Board {
   coverImageKey String?
   isArchived  Boolean  @default(false)
   
-  // Relations
   ownerId     String
   owner       User    @relation("BoardOwner", fields: [ownerId], references: [id])
   members     BoardMember[]
@@ -377,7 +378,6 @@ model Task {
   order       Int       @default(0)
   isArchived  Boolean   @default(false)
   
-  // Relations
   columnId    String
   column      Column    @relation("ColumnTasks", fields: [columnId], references: [id], onDelete: Cascade)
   boardId     String
@@ -475,7 +475,7 @@ model Attachment {
   id           String   @id @default(uuid())
   taskId       String
   key          String
-  url          String?  // <-- ADD ? to make it optional
+  url          String?
   filename     String
   mimeType     String
   size         Int
@@ -540,13 +540,12 @@ model BoardInvite {
 
 model ActivityLog {
   id          String @id @default(cuid())
-  action      String // CREATED, UPDATED, DELETED, MOVED, ASSIGNED, etc.
-  entityType  String // BOARD, COLUMN, TASK, COMMENT, etc.
+  action      String
+  entityType  String
   entityId    String
   description String @db.Text
-  metadata    Json?  // Store additional data like old/new values
+  metadata    Json?
   
-  // Relations
   boardId String?
   board   Board?  @relation(fields: [boardId], references: [id], onDelete: SetNull)
   taskId  String?
@@ -597,27 +596,10 @@ model MyTask {
   @@map("myTasks")
 }
 
-model Server {
-  id         String @id @default(uuid())
-  name       String
-  imageUrl   String @db.Text
-  inviteCode String @unique
-
-  userId     String
-  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  members    Member[]
-  channels   Channel[]
-
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@index([userId])
-}
 
 model MessageThread {
   id          String   @id @default(cuid())
-  messageId   String   @unique // Original message that starts the thread
+  messageId   String   @unique
   message     Message  @relation("ThreadParent", fields: [messageId], references: [id], onDelete: Cascade)
   replies     ThreadReply[]
   replyCount  Int      @default(0)
@@ -628,44 +610,13 @@ model MessageThread {
   @@map("message_threads")
 }
 
-model ThreadReply {
-  id          String        @id @default(cuid())
-  threadId    String
-  thread      MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  content     String        @db.Text
-  fileUrl     String?       @db.Text
-  memberId    String
-  member      Member        @relation(fields: [memberId], references: [id])
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  deleted     Boolean       @default(false)
-  
-  @@index([threadId])
-  @@index([memberId])
-  @@map("thread_replies")
-}
-
-model MessageReaction {
-  id        String   @id @default(cuid())
-  messageId String
-  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  memberId  String
-  member    Member   @relation(fields: [memberId], references: [id])
-  emoji     String   // Unicode emoji or custom emoji code
-  createdAt DateTime @default(now())
-  
-  @@unique([messageId, memberId, emoji]) // One reaction per emoji per user
-  @@index([messageId])
-  @@map("message_reactions")
-}
-
 model MessageBookmark {
   id        String   @id @default(cuid())
   messageId String
   message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
   userId    String
   user      User     @relation(fields: [userId], references: [id])
-  note      String?  // Optional note about the bookmark
+  note      String?
   createdAt DateTime @default(now())
   
   @@unique([messageId, userId])
@@ -674,18 +625,35 @@ model MessageBookmark {
 }
 
 model ChannelMember {
-  id        String      @id @default(cuid())
-  channelId String
-  channel   Channel     @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  memberId  String
-  member    Member      @relation(fields: [memberId], references: [id])
-  role      ChannelRole @default(MEMBER)
-  joinedAt  DateTime    @default(now())
-  
-  @@unique([channelId, memberId])
+  id           String      @id @default(cuid())
+  channelId    String
+  channel      Channel     @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  teamMemberId String
+  teamMember   TeamMember  @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
+  role         ChannelRole @default(MEMBER)
+  joinedAt     DateTime    @default(now())
+
+  @@unique([channelId, teamMemberId])
   @@index([channelId])
-  @@index([memberId])
+  @@index([teamMemberId])
   @@map("channel_members")
+}
+
+model ChannelInvite {
+  id          String    @id @default(cuid())
+  channelId   String
+  channel     Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  token       String    @unique
+  expiresAt   DateTime?
+  maxUses     Int?
+  useCount    Int       @default(0)
+  createdById String
+  createdBy   User      @relation("ChannelInviteSender", fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@index([token])
+  @@index([channelId])
+  @@map("channel_invites")
 }
 
 enum ChannelRole {
@@ -699,12 +667,12 @@ model ChannelMeeting {
   id          String    @id @default(cuid())
   channelId   String
   channel     Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  startedBy   String    // Member ID who started
+  startedBy   String
   roomName    String    @unique
-  status      String    @default("active") // active, ended
+  status      String    @default("active")
   startedAt   DateTime  @default(now())
   endedAt     DateTime?
-  participants Json[]   // Array of {userId, joinedAt, leftAt}
+  participants Json[]
   
   @@index([channelId])
   @@index([status])
@@ -717,30 +685,7 @@ enum MemberRole {
   GUEST
 }
 
-model Member {
-  id   String     @id @default(uuid())
-  role MemberRole @default(GUEST)
 
-  userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  serverId String
-  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
-
-  messages       Message[]
-  directMessages DirectMessage[]
-  threadReplies   ThreadReply[]
-  messageReactions MessageReaction[]
-  channelMemberships ChannelMember[]
-  conversationsInitiated Conversation[] @relation("MemberOne")
-  conversationsReceived  Conversation[] @relation("MemberTwo")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([serverId])
-}
 
 enum ChannelType {
   TEXT
@@ -748,69 +693,98 @@ enum ChannelType {
   VIDEO
 }
 
-model Channel {
-  id   String      @id @default(uuid())
-  name String
-  type ChannelType @default(TEXT)
-
-  userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  serverId String
-  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
-
-  messages Message[]
-  members     ChannelMember[]
-  meetings    ChannelMeeting[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([serverId])
+enum ChannelVisibility {
+  TEAM        // every team member can see and post
+  RESTRICTED  // only members explicitly added via ChannelMember
 }
 
+model Channel {
+  id            String            @id @default(uuid())
+  name          String
+  description   String?
+  type          ChannelType       @default(TEXT)
+  coverImage    String?
+  coverImageKey String?
+  visibility    ChannelVisibility @default(TEAM)
+
+  teamId        String
+  team          Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  createdById   String
+  createdBy     User              @relation("ChannelCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  messages      Message[]
+  members       ChannelMember[]
+  meetings      ChannelMeeting[]
+  invites       ChannelInvite[]
+
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@index([teamId])
+  @@index([createdById])
+  @@map("channels")
+}
 model Message {
-  id      String @id @default(uuid())
-  content String @db.Text
-  fileUrl String? @db.Text
-  
-  memberId String
-  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  
+  id        String @id @default(uuid())
+  content   String @db.Text
+  fileUrl   String? @db.Text
+
+  senderId  String
+  sender    TeamMember @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+
   channelId String
   channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  
-  parentId String?  // ID of the message this is replying to
-  parent   Message? @relation("MessageReplies", fields: [parentId], references: [id])
-  replies  Message[] @relation("MessageReplies")
-  
-  threadParent   MessageThread?  @relation("ThreadParent")
-  reactions      MessageReaction[]
-  bookmarks      MessageBookmark[]
-  deleted Boolean @default(false)
+
+  parentId  String?
+  parent    Message? @relation("MessageReplies", fields: [parentId], references: [id])
+  replies   Message[] @relation("MessageReplies")
+
+  threadParent MessageThread? @relation("ThreadParent")
+  reactions    MessageReaction[]
+  bookmarks    MessageBookmark[]
+  deleted      Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([channelId])
-  @@index([memberId])
-  @@index([parentId])  // Add index for performance
+  @@index([senderId])
+  @@index([parentId])
+  @@map("messages")
 }
 
-model Conversation {
-  id String @id @default(uuid())
+model MessageReaction {
+  id           String     @id @default(cuid())
+  messageId    String
+  message      Message    @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  teamMemberId String?
+  teamMember   TeamMember? @relation("MessageReactionSender", fields: [teamMemberId], references: [id], onDelete: Cascade)
+  emoji        String
+  createdAt    DateTime   @default(now())
 
-  memberOneId String
-  memberOne   Member @relation("MemberOne", fields: [memberOneId], references: [id], onDelete: Cascade)
-
-  memberTwoId String
-  memberTwo   Member @relation("MemberTwo", fields: [memberTwoId], references: [id], onDelete: Cascade)
-
-  directMessages DirectMessage[]
-
-  @@unique([memberOneId, memberTwoId])
-  @@index([memberTwoId])
+  @@unique([messageId, teamMemberId, emoji])
+  @@index([messageId])
+  @@map("message_reactions")
 }
+
+model ThreadReply {
+  id        String        @id @default(cuid())
+  threadId  String
+  thread    MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  content   String        @db.Text
+  fileUrl   String?       @db.Text
+  senderId  String
+  sender    TeamMember    @relation("ThreadReplySender", fields: [senderId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  deleted   Boolean       @default(false)
+
+  @@index([threadId])
+  @@index([senderId])
+  @@map("thread_replies")
+}
+
 
 model TeamConversation {
   id String @id @default(uuid())
@@ -818,7 +792,6 @@ model TeamConversation {
   teamId String
   team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
   
-  // Two participants - both are TeamMembers
   participantOneId String
   participantOne   TeamMember @relation("ParticipantOne", fields: [participantOneId], references: [id], onDelete: Cascade)
   
@@ -841,7 +814,6 @@ model TeamDirectMessage {
   conversationId String
   conversation   TeamConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   
-  // Sender is a TeamMember
   senderId String
   sender   TeamMember @relation(fields: [senderId], references: [id], onDelete: Cascade)
   reactions  TeamDirectMessageReaction[]
@@ -887,26 +859,6 @@ model TeamDirectMessageBookmark {
 }
  
 
-model DirectMessage {
-  id      String  @id @default(uuid())
-  content String  @db.Text
-  fileUrl String? @db.Text
-
-  memberId String
-  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
-
-  conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  deleted Boolean @default(false)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([memberId])
-  @@index([conversationId])
-}
-
 model Event {
   id           String            @id @default(cuid())
   title        String
@@ -927,23 +879,19 @@ model Event {
   @@map("events")
 }
 
-// New: Meeting attendees for team collaboration
 model MeetingAttendee {
   id        String   @id @default(cuid())
   meetingId String
   meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   
-  // Either internal team member or external guest
   userId    String?
   user      User?    @relation(fields: [userId], references: [id])
   
-  // For external guests or when userId not available
   email     String
   name      String?
   isExternal Boolean @default(false)
   
-  // RSVP tracking
-  status    String   @default("pending") // pending, accepted, declined, tentative
+  status    String   @default("pending")
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -952,17 +900,14 @@ model MeetingAttendee {
   @@map("meeting_attendees")
 }
 
-// New: Team meeting links (visible to all team members)
 model TeamMeetingLink {
   id          String   @id @default(cuid())
   meetingId   String   @unique
   meeting     Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
   
-  // If this is a team-wide meeting
   teamId      String?
   team        Team?    @relation(fields: [teamId], references: [id])
   
-  // Shareable link token
   shareToken  String   @unique
   isActive    Boolean  @default(true)
   
@@ -1035,7 +980,7 @@ model Meeting {
   calendarEventId String
   calendarAppType String?
   status          MeetingStatus @default(SCHEDULED)
-  metadata        Json?    // ← ADD THIS LINE
+  metadata        Json?
 
   reminders       Reminder[]
   userId String
@@ -1051,25 +996,45 @@ model Meeting {
   @@map("meetings")
 }
 
+model MeetingTranscript {
+  id              String   @id @default(cuid())
+  meetingId       String
+  userId          String
+  language        String   // 'en', 'hi', 'de', 'pt'
+  content         String   @db.Text // Translated transcript text
+  originalContent String   @db.Text // Original language transcript
+  summary         String?  @db.Text // Translated summary
+  actionItems     Json?    // Translated action items
+  keyPoints       String[] @default([]) // Translated key points
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  meeting AiMeeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([meetingId, userId, language])
+  @@index([meetingId])
+  @@index([userId])
+}
+
 model AiMeeting {
   id              String   @id @default(cuid())
   userId          String   @map("user_id")
   botId           String?  @map("bot_id")
   meetingUrl      String   @map("meeting_url")
   meetingName     String?  @map("meeting_name")
-  platform        String?  // zoom, google_meet, teams
-  status          String   @default("pending") // pending, joined, recording, completed, failed
+  platform        String?
+  status          String   @default("pending")
   
-  // Recording data
   videoUrl        String?  @map("video_url")
   audioUrl        String?  @map("audio_url")
   videoBlob       Bytes?   @map("video_blob")
   audioBlob       Bytes?   @map("audio_blob")
-  duration        Int?     // in seconds
+  duration        Int?
   
-  // Transcription
-  transcript      Json?    // Full transcript array
-  speakers        String[] // Unique speakers
+  transcript      Json?
+  speakers        String[]
   
   summary         String?  @db.Text
   actionItems     Json?    @map("action_items")
@@ -1083,30 +1048,29 @@ model AiMeeting {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
   
-  // Webhook data
   webhookData     Json?     @map("webhook_data")
    processedEventIds      String[] @default([]) 
   lastWebhookTimestamp   String?  
   errorMessage    String?   @map("error_message")
   transcriptionProvider  String   @default("assemblyai")
   assemblyaiTranscriptId String?
-  sourceMeetingId String?  @unique   // links to Meeting.id
+  sourceMeetingId String?  @unique
   scheduledFor    DateTime? 
-  
+  transcripts     MeetingTranscript[]
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   chatMessages    ChatMessage[]
 
   @@index([userId])
   @@index([botId])
   @@index([status])
-  @@map("ai_meetings")  // Better table name
+  @@map("ai_meetings")
 }
 
 model ChatMessage {
   id          String   @id @default(cuid())
   meetingId   String   @map("meeting_id")
   userId      String   @map("user_id")
-  role        String   // user, assistant, system
+  role        String
   content     String   @db.Text
   contextUsed Boolean  @default(false) @map("context_used")
   createdAt   DateTime @default(now()) @map("created_at")
@@ -1132,19 +1096,24 @@ model File {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
   notifications Notification[]
-  // NEW: Team and visibility fields
-  teamId       String?     // If null, it's personal file
+
+  teamId       String?
   team         Team?       @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  visibility   FileVisibility @default(PERSONAL) // PERSONAL, TEAM, PASSWORD_PROTECTED
-  password     String?     // Hashed password for protected files
-  folderId     String?     // For folder organization
-  folder       Folder?     @relation(fields: [folderId], references: [id])
-  
-  // NEW: Assignment and metadata
+
+  visibility   FileVisibility @default(PERSONAL)
+  password     String?
+  folderId     String?
+  folder       Folder?     @relation(fields: [folderId], references: [id], onDelete: SetNull)
+
   assignedTo   FileAssignment[]
   fileTags     FileTag[]
   description  String?
-  
+
+  links        FileLink[]
+
+  isDeleted    Boolean     @default(false)
+  deletedAt    DateTime?
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -1152,16 +1121,42 @@ model File {
   @@index([folderId])
   @@index([createdAt])
   @@index([visibility])
+  @@index([isDeleted])
   @@map("files")
 }
 
-// NEW: Folder model for organization
+enum FileLinkType {
+  CHANNEL
+  MESSAGE
+  PAGE
+  NOTE
+  TASK
+}
+
+// One row per attachment. A file can have any number of these,
+// so it can be linked to 3 tasks, 2 docs, and a channel simultaneously.
+model FileLink {
+  id         String       @id @default(cuid())
+  fileId     String
+  file       File         @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  type       FileLinkType
+  contextId  String       // the id of the Channel/Message/Page/Note/Task
+  linkedById String
+  linkedBy   User         @relation(fields: [linkedById], references: [id], onDelete: Cascade)
+  createdAt  DateTime     @default(now())
+
+  @@unique([fileId, type, contextId])
+  @@index([fileId])
+  @@index([type, contextId])
+  @@map("file_links")
+}
+
 model Folder {
   id          String   @id @default(cuid())
   name        String
   userId      String
   teamId      String?
-  parentId    String?  // For nested folders
+  parentId    String?
   parent      Folder?  @relation("FolderChildren", fields: [parentId], references: [id])
   children    Folder[] @relation("FolderChildren")
   files       File[]
@@ -1177,14 +1172,13 @@ model Folder {
   @@map("folders")
 }
 
-// NEW: File assignment to team members
 model FileAssignment {
   id        String   @id @default(cuid())
   fileId    String
   file      File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
-  userId    String   // Assigned to this user
+  userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  assignedBy String  // Who assigned it
+  assignedBy String
   createdAt DateTime @default(now())
 
   @@unique([fileId, userId])
@@ -1193,7 +1187,6 @@ model FileAssignment {
   @@map("file_assignments")
 }
 
-// NEW: File tags for organization
 model FileTag {
   id     String @id @default(cuid())
   fileId String
@@ -1207,21 +1200,19 @@ model FileTag {
 model Storage {
   id           String   @id @default(cuid())
   userId       String   @unique
-  storageQuota BigInt   @default(2147483648) // 2GB in bytes
+  storageQuota BigInt   @default(2147483648)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-
-// NEW: Team storage quota tracking (optional - for team-wide quota)
 model TeamStorage {
   id           String   @id @default(cuid())
   teamId       String   @unique
   team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   usedStorage  BigInt   @default(0)
-  quota        BigInt   @default(10737418240) // 10GB default
+  quota        BigInt   @default(10737418240)
   lastUpdated  DateTime @updatedAt
 
   @@map("team_storage")
@@ -1236,7 +1227,7 @@ model Clip {
   fileSize    Int
   duration    Float?
   fileType    String
-  type        String   @default("both") // "audio" | "video" | "both"
+  type        String   @default("both")
   thumbnailUrl String?
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1248,40 +1239,12 @@ model Clip {
   @@map("clip")
 }
 
-model Workspace {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String?
-  image       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  memberships WorkspaceMembership[]
-  pages       Page[]
-  shares      Share[]
-
-  @@map("workspaces")
-}
-
-model WorkspaceMembership {
-  id          String   @id @default(cuid())
-  userId      String
-  workspaceId String
-  DocRole     DocRole     @default(VIEWER)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, workspaceId])
-  @@map("workspace_memberships")
-}
+// ── Team-native docs system (Workspace fully removed) ──────────────────────
 
 enum PageVisibility {
   PRIVATE
-  WORKSPACE
+  WORKSPACE  // kept only for legacy rows; no longer written by the app
+  TEAM
   PUBLIC
 }
 
@@ -1292,9 +1255,8 @@ model Page {
   emoji       String?
   coverImage  String?
   parentId    String?
-  workspaceId String
   authorId    String
-  visibility  PageVisibility @default(WORKSPACE)
+  visibility  PageVisibility @default(TEAM)
   position    Float          @default(0)
   isPublished Boolean        @default(false)
   publishedUrl String?       @unique
@@ -1305,30 +1267,28 @@ model Page {
   
   parent    Page?    @relation("PageChildren", fields: [parentId], references: [id], onDelete: Cascade)
   children  Page[]   @relation("PageChildren")
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   author    User     @relation(fields: [authorId], references: [id])
   blocks    Block[]
   comments  Comment[]
   versions  PageVersion[]
   shares    Share[]
 
-  teamId      String?
-  team        Team?       @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  teamId      String
+  team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
   assignedToId String?
   assignedTo  TeamMember? @relation("AssignedPages", fields: [assignedToId], references: [id], onDelete: SetNull)
   assignedById String?
+  assignedBy  User?       @relation("PageAssignedBy", fields: [assignedById], references: [id], onDelete: SetNull)
   
-  // NEW: Favorites relation
   favoritedBy PageFavorite[]
   
-  // NEW: Templates
   isTemplate  Boolean        @default(false)
   templateCategory String?
   
   @@index([teamId])
   @@index([assignedToId])
   @@index([isTemplate])
-  @@index([workspaceId])
   @@index([parentId])
   @@index([searchVector], type: Gin)
   @@map("pages")
@@ -1433,12 +1393,14 @@ model DocFile {
   url         String
   key         String  
   uploaderId  String
-  workspaceId String?
+  teamId      String?
   createdAt   DateTime @default(now())
 
-  uploader User @relation(fields: [uploaderId], references: [id])
+  uploader User  @relation(fields: [uploaderId], references: [id])
+  team     Team? @relation(fields: [teamId], references: [id], onDelete: SetNull)
 
   @@index([uploaderId])
+  @@index([teamId])
   @@map("docFiles")
 }
 
@@ -1452,7 +1414,6 @@ model Share {
   id          String     @id @default(cuid())
   token       String     @unique
   pageId      String
-  workspaceId String
   type        ShareType  @default(VIEW)
   expiresAt   DateTime?
   password    String?
@@ -1460,12 +1421,14 @@ model Share {
   createdAt   DateTime   @default(now())
 
   page      Page      @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   createdBy User      @relation(fields: [createdById], references: [id])
 
   @@index([token])
+  @@index([pageId])
   @@map("shares")
 }
+
+// ─────────────────────────────────────────────────────────────────────────
 
 enum EventLocationType {
   GOOGLE_MEET_AND_CALENDAR
@@ -1529,13 +1492,13 @@ model CalendarEvent {
   id           String   @id @default(uuid())
   calendarId   String
   calendar     Calendar @relation(fields: [calendarId], references: [id])
-  eventUuid    String   @unique // from the SDK
+  eventUuid    String   @unique
   name         String?
   meetingUrl   String?
   startTime    DateTime?
   endTime      DateTime?
   isRecurring  Boolean  @default(false)
-  botParam     Json?    // scheduled bot configuration
+  botParam     Json?
   createdAt    DateTime @default(now())
 }
 
@@ -1559,13 +1522,12 @@ enum CallType {
 model Call {
   id              String     @id @default(cuid())
   callerId        String     @map("caller_id")
-  calleeId        String?    @map("callee_id") // Nullable for group calls
+  calleeId        String?    @map("callee_id")
   roomName        String     @unique @default(uuid())
   status          CallStatus @default(PENDING)
   type            CallType   @default(AUDIO)
   isGroupCall     Boolean    @default(false)
   
-  // For simultaneous calls / merging
   parentCallId    String?    @map("parent_call_id")
   parentCall      Call?      @relation("MergedCalls", fields: [parentCallId], references: [id])
   childCalls      Call[]     @relation("MergedCalls")
@@ -1573,16 +1535,15 @@ model Call {
   
   startedAt       DateTime?  @map("started_at")
   endedAt         DateTime?  @map("ended_at")
-  duration        Int?       // Duration in seconds
+  duration        Int?
   
-  // Relations
   caller          User       @relation("Caller", fields: [callerId], references: [id])
   callee          User?      @relation("Callee", fields: [calleeId], references: [id])
   participants    CallParticipant[]
   recordings      CallRecording[]
   notifications   Notification[]
   whiteboardData  Json?      @map("whiteboard_data")
-  annotations     Json[]     // Screen share annotations
+  annotations     Json[]
   
   createdAt       DateTime   @default(now())
   updatedAt       DateTime @updatedAt @default(now())
@@ -1614,13 +1575,13 @@ model CallParticipant {
 model CallRecording {
   id          String   @id @default(cuid())
   callId      String   @map("call_id")
-  recordedBy  String   @map("recorded_by") // User who initiated recording
+  recordedBy  String   @map("recorded_by")
   
   url         String
   filename    String
-  size        Int?     // File size in bytes
-  duration    Int?     // Recording duration in seconds
-  format      String   @default("webm") // webm, mp3, etc.
+  size        Int?
+  duration    Int?
+  format      String   @default("webm")
   
   createdAt   DateTime @default(now()) @map("created_at")
   
@@ -1706,7 +1667,7 @@ model AIAgentSession {
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  sessionType String   // 'voice', 'chat', 'proactive'
+  sessionType String
   status      String   @default("active")
   
   currentTeamId    String?
@@ -1757,7 +1718,6 @@ model Reminder {
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  // Relations to existing models
   taskId      String?
   task        Task?    @relation(fields: [taskId], references: [id])
   meetingId   String?
@@ -1797,12 +1757,11 @@ model Notification {
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  type        String   // TASK_ASSIGNED, PAGE_ASSIGNED, MEETING_SCHEDULED, CALL_INCOMING, FILE_ASSIGNED, TIME_APPROVAL_NEEDED, etc.
+  type        String
   title       String
   body        String
-  data        Json?    // Contextual data: { taskId, boardId, pageId, meetingId, etc. }
+  data        Json?
   
-  // Related entities (optional links)
   taskId      String?
   task        Task?    @relation(fields: [taskId], references: [id], onDelete: SetNull)
   pageId      String?
@@ -1814,18 +1773,16 @@ model Notification {
   callId      String?
   call        Call?    @relation(fields: [callId], references: [id], onDelete: SetNull)
 
-  // Delivery tracking
-  channels    String[] // ["in_app", "email", "slack", "discord", "push"]
+  channels    String[]
   read        Boolean  @default(false)
   readAt      DateTime?
   clicked     Boolean  @default(false)
   clickedAt   DateTime?
   
-  // For actionable notifications
-  actions     Json?    // [{ label: "Approve", action: "approve_time", endpoint: "/api/..." }]
+  actions     Json?
   
   createdAt   DateTime @default(now())
-  expiresAt   DateTime? // Auto-archive after date
+  expiresAt   DateTime?
   
   @@index([userId, read, createdAt])
   @@index([type, createdAt])
@@ -1838,11 +1795,10 @@ model NotificationPreference {
   userId          String   @unique
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  // Channel preferences by notification type
-  preferences     Json     // { TASK_ASSIGNED: { in_app: true, email: true, slack: false }, ... }
+  preferences     Json
   
-  quietHoursStart Int?     // 0-23, null if disabled
-  quietHoursEnd   Int?     // 0-23
+  quietHoursStart Int?
+  quietHoursEnd   Int?
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -2119,7 +2075,7 @@ model NoteFile {
   url          String
   key          String  
   uploaderId   String
-  noteId       String?  // Optional: link to specific note
+  noteId       String?
   createdAt    DateTime @default(now())
 
   uploader User @relation(fields: [uploaderId], references: [id])
@@ -2201,7 +2157,7 @@ model ScheduledEmail {
   threadId          String?
   scheduledAt       DateTime
   sentAt            DateTime?
-  status            String   @default("pending") // pending | sent | failed | cancelled
+  status            String   @default("pending")
   error             String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -2233,99 +2189,11 @@ model Room {
   @@map("rooms")
 }
 
-model MusicTrack {
-  id            String   @id @default(cuid())
-  title         String
-  artist        String
-  album         String?
-  genre         String?
-  duration      Int?     // in seconds
-  coverImage    String?  // URL to cover art
-  
-  audioUrl      String   // S3/R2 public URL
-  audioKey      String   @unique // S3/R2 object key
-  originalName  String
-  mimeType      String
-  size          Int      // bytes
-  
-  uploadedById  String
-  uploadedBy    User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
-  
-  playlists     PlaylistTrack[]
-  favourites    MusicFavourite[]
-  
-  playCount     Int      @default(0)
-  isPublic      Boolean  @default(true)
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  @@index([uploadedById])
-  @@index([genre])
-  @@index([createdAt])
-  @@map("music_tracks")
-}
-
-model Playlist {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  coverImage  String?
-  
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  tracks      PlaylistTrack[]
-  
-  isPublic    Boolean  @default(false)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([userId])
-  @@map("playlists")
-}
-
-model PlaylistTrack {
-  id         String   @id @default(cuid())
-  
-  playlistId String
-  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
-  
-  trackId    String
-  track      MusicTrack @relation(fields: [trackId], references: [id], onDelete: Cascade)
-  
-  order      Int      @default(0)
-  addedAt    DateTime @default(now())
-
-  @@unique([playlistId, trackId])
-  @@index([playlistId])
-  @@index([trackId])
-  @@map("playlist_tracks")
-}
-
-model MusicFavourite {
-  id        String   @id @default(cuid())
-  
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  trackId   String
-  track     MusicTrack @relation(fields: [trackId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-
-  @@unique([userId, trackId])
-  @@index([userId])
-  @@index([trackId])
-  @@map("favourites")
-}
-
 model VoiceAgentSession {
   id          String   @id @default(cuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  status      String   @default("idle") // idle, listening, processing, speaking
+  status      String   @default("idle")
   messages    Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -2338,7 +2206,7 @@ model VoiceAgentReminder {
   id          String   @id @default(cuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type        String   // meeting, task, assignment, general
+  type        String
   title       String
   description String?
   metadata    Json?
@@ -2363,110 +2231,12 @@ model UserVoiceSettings {
   proactiveEnabled  Boolean  @default(true)
   volume            Float    @default(1.0)
   language          String   @default("en")
-  aiProvider        String   @default("openai") // openai, gemini, claude, ollama
+  aiProvider        String   @default("openai")
   aiModel           String   @default("gpt-4o")
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
   @@map("user_voice_settings")
-}
-
-
-model MusicFavorite {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  itemId    String   // JioSaavn id OR uploaded track id (prefixed "local:")
-  type      MusicFavoriteType
-  // denormalized snapshot for fast rendering without re-fetching JioSaavn
-  title     String
-  subtitle  String?
-  image     String?
-
-  createdAt DateTime @default(now())
-
-  @@unique([userId, itemId, type])
-  @@index([userId, type])
-}
-
-enum MusicFavoriteType {
-  SONG
-  ALBUM
-  PLAYLIST
-  ARTIST
-  SHOW
-}
-
-model MusicPlaylist {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  name        String
-  description String?
-  coverImage  String?
-
-  // array of track refs - JioSaavn ids OR "local:<uploadedTrackId>"
-  songIds     String[] @default([])
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([userId])
-}
-
-model RecentlyPlayed {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  itemId    String   // JioSaavn song id OR "local:<uploadedTrackId>"
-  title     String
-  subtitle  String?
-  image     String?
-  duration  Int?
-  type      String   @default("song")
-  playedAt  DateTime @default(now())
-
-  @@index([userId, playedAt])
-}
-
-model UserMusicPreferences {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  languages String[] @default(["hindi", "english"])
-  streamQuality String @default("excellent") // low | medium | high | excellent
-
-  updatedAt DateTime @updatedAt
-}
-
-// User-uploaded tracks (stored on Cloudflare R2)
-model UploadedTrack {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  title       String
-  artist      String?
-  album       String?
-
-  // R2 object keys
-  audioKey    String   // e.g. music/<userId>/<id>.mp3
-  imageKey    String?  // optional cover art
-
-  duration    Int?     // seconds
-  fileSize    Int?     // bytes
-  mimeType    String   @default("audio/mpeg")
-
-  isPublic    Boolean  @default(false) // visible to other users in search
-
-  createdAt   DateTime @default(now())
-
-  @@index([userId])
-  @@index([isPublic])
 }
 
 model RouteViewSession {

@@ -85,12 +85,11 @@ export default function ParticipantsPanel({
   );
 
   return (
-    <div className="flex flex-col h-full bg-neutral-950">
+    <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800 flex-shrink-0">
+      <div className="flex items-center bg-[#262626] justify-between px-4 py-3 border-b border-neutral-800 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <Users className="size-4text-blue-400" />
-          <span className="text-white font-semibold text-sm">Participants</span>
+          <span className="text-white text-sm">Participants</span>
           <span className="text-neutral-500 text-xs bg-neutral-800 px-1.5 py-0.5 rounded-full">
             {participants.length}
           </span>
@@ -104,8 +103,8 @@ export default function ParticipantsPanel({
       </div>
 
       {/* Search */}
-      <div className="px-3 py-2 border-b border-neutral-800 /60 flex-shrink-0">
-        <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 rounded-xl px-3 py-2">
+      <div className="px-0 py-0 border-b border-neutral-800 /60 flex-shrink-0">
+        <div className="flex items-center gap-2 border border-neutral-800 px-3 py-2">
           <Search className="w-3.5 h-3.5 text-neutral-600 flex-shrink-0" />
           <input
           aria-label='participant-search'

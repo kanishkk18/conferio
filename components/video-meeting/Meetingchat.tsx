@@ -42,11 +42,10 @@ export default function MeetingChat({ messages, onSend, onClose, displayName, us
   };
 
   return (
-    <div className="flex flex-col h-full bg-neutral-950">
+    <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800 flex-shrink-0">
+      <div className="flex items-center justify-between bg-[#262626] px-4 py-3 border-b border-neutral-800 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <MessageSquare className="size-4text-blue-400" />
           <span className="text-white font-semibold text-sm">Meeting Chat</span>
           <span className="text-neutral-500 text-xs bg-neutral-800 px-1.5 py-0.5 rounded-full">{messages.length}</span>
         </div>

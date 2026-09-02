@@ -338,7 +338,7 @@ export default async function handler(
 
     const page = await prisma.page.findUnique({
       where: { id: pageId },
-      include: { workspace: true },
+      include: { team: true },
     });
     if (!page) return res.status(404).json({ error: "Page not found" });
 

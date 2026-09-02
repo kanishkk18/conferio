@@ -31,13 +31,6 @@ const iconMap = {
   [ChannelType.VIDEO]: <Video className="mr-2 h-4 w-4" />
 };
 
-const roleIconMap = {
-  [MemberRole.GUEST]: null,
-  [MemberRole.MODERATOR]: (
-    <ShieldCheck className="h-4 w-4 mr-2 text-indigo-500" />
-  ),
-  [MemberRole.ADMIN]: <ShieldAlert className="h-4 w-4 mr-2 text-rose-500" />
-};
 
 interface ServerSidebarProps {
   serverId: string;
@@ -94,14 +87,9 @@ export function MembersDrawer({ serverId }: ServerSidebarProps) {
         </DrawerHeader>
         <div className="no-scrollbar overflow-y-auto px-4">
 
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-          eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-          enim ad minim veniam, quis nostrud exercitation ullamco laboris
-          nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-          reprehenderit in voluptate velit esse cillum dolore eu fugiat
-          nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-          sunt in culpa qui officia deserunt mollit anim id est laborum.
-
+          {server.messages?.filter((msg) => msg.fileUrl).map((msg) => (
+            <img key={msg.id} src={msg.fileUrl} alt="" />
+          ))}
         </div>
         <DrawerFooter>
           <Button type="submit">Add members</Button>

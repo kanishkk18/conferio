@@ -37,6 +37,7 @@
     "@boxyhq/metrics": "0.2.10",
     "@boxyhq/react-ui": "3.4.1",
     "@boxyhq/saml-jackson": "1.45.1",
+    "@deepgram/sdk": "^5.9.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@editorjs/attaches": "^1.3.2",

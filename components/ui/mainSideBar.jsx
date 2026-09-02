@@ -542,7 +542,7 @@ export default function Mainsidebar() {
     },
     {
       label: 'Docs',
-      href: '/docs',
+      href: teamSlug ? `/team/${teamSlug}/docs` : '/docs',
       icon: <FileText className="text-neutral-700 dark:text-white/70 size-[1.12rem] flex-shrink-0" />,
     },
     {
@@ -590,11 +590,6 @@ export default function Mainsidebar() {
       label: "Scheduled",
       href: "/scheduled/page",
       icon: <ListTodo className="text-neutral-700 dark:text-white/70 size-[1.12rem] flex-shrink-0" />,
-    },
-    {
-      label: 'Music',
-      href: '/music',
-      icon: <Music className="text-neutral-700 dark:text-white/70 size-[1.12rem] flex-shrink-0" />,
     },
     {
       label: 'Settings',

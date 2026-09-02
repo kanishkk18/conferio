@@ -586,7 +586,9 @@ export function EnhancedFileUploader({ open, onClose, teamId, members = EMPTY_ME
     <Tabs value={activeTab} onValueChange={setActiveTab}>
       <Modal open={open} onOpenChange={handleClose}>
         <ModalBody className=" !border-0 !shadow-none !min-w-[35%] !w-[35%] !h-[64vh] ">
-          <img className="absolute opacity-50 -bottom-0 w-full left-1/2 -translate-x-1/2 h-auto pointer-events-none" src="https://res.cloudinary.com/kanishkkcloud18/image/upload/v1775306460/ruixen_moon_muce3s.png" alt="" />
+          {/* <img className="absolute opacity-50 -bottom-0 w-full left-1/2 -translate-x-1/2 h-auto pointer-events-none" src="https://res.cloudinary.com/kanishkkcloud18/image/upload/v1775306460/ruixen_moon_muce3s.png" alt="" /> */}
+          <img className="absolute opacity-100 -bottom-2 w-full left-1/2 -translate-x-1/2 h-auto pointer-events-none" src="https://pub-08af51b0459743828032880ad678a4cf.r2.dev/uploads/7dd0a36e-d0a7-4761-8a8a-8e0a75c4d628-glowcircle.png" alt="" />
+
 
           <ModalContent className="!bg-transparent !border-0 !shadow-none !h-full !w-full !px-0 !py-0">
             <TabsList className="flex w-[50%] !bg-transparent">
@@ -612,9 +614,7 @@ export function EnhancedFileUploader({ open, onClose, teamId, members = EMPTY_ME
             </TabsList>
 
             <div className="relative w-full max-w-[22rem] mx-auto my-auto ">
-              <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-purple-600/30 blur-3xl rounded-full pointer-events-none" />
               <div className="relative bg-gradient-to-b from-[#1a1a2e]/90 to-[#0f0f1a]/95 backdrop-blur-xl border border-white/10 rounded-[1rem] p-1 -mt-10 shadow-2xl overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-blue-500/5 pointer-events-none" />
 
                 {/* <button 
                   onClick={handleClose}

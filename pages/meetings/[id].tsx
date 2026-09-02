@@ -1306,6 +1306,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable"
+import { LanguageSelector } from '@/components/aiMeeting/LanguageSelector';
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -1361,6 +1362,29 @@ export default function MeetingDetail({ id, open, onClose }: { id: string | null
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'transcript' | 'summary'>('summary');
   const [deleting, setDeleting] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
+
+  useEffect(() => {
+    if (selectedLanguage === 'en' || !meeting) return;
+
+    // Fetch translated version
+    fetch(`/api/aimeetings/${id}/transcript?lang=${selectedLanguage}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.transcript) {
+          // Update meeting state with translated content
+          setMeeting(prev => prev ? {
+            ...prev,
+            transcript: data.transcript,
+            summary: data.summary,
+            actionItems: data.actionItems,
+            keyPoints: data.keyPoints,
+            _language: selectedLanguage,
+          } : null);
+        }
+      });
+  }, [selectedLanguage, id]);
+
 
   useEffect(() => {
     if (id && session) {
@@ -1476,6 +1500,10 @@ export default function MeetingDetail({ id, open, onClose }: { id: string | null
                   <Trash2 className="size-5" />
                 )}
               </button>
+              <LanguageSelector
+                value={selectedLanguage}
+                onChange={setSelectedLanguage}
+              />
             </div>
           </div>
         </div>
@@ -1571,6 +1599,12 @@ export default function MeetingDetail({ id, open, onClose }: { id: string | null
                     messages={meeting?.chatMessages ?? EMPTY_MESSAGES}
                     transcript={meeting?.transcript ?? EMPTY_TRANSCRIPT}
                   />
+                  {selectedLanguage !== 'en' && meeting?._language && (
+                    <span className="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/20 
+    text-purple-700 dark:text-purple-400 rounded-full font-medium">
+                      🌐 Translated ({LANGUAGES.find(l => l.code === selectedLanguage)?.name})
+                    </span>
+                  )}
                 </div>
               </ResizablePanel>
             </ResizablePanelGroup>
@@ -1584,7 +1618,7 @@ export default function MeetingDetail({ id, open, onClose }: { id: string | null
 
 function ChatInterface({
   meetingId,
- messages: initialMessages = EMPTY_MESSAGES,  // ✅ was []
+  messages: initialMessages = EMPTY_MESSAGES,  // ✅ was []
   transcript = EMPTY_TRANSCRIPT // Default to empty array 
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages || []);
@@ -1741,7 +1775,7 @@ function ChatInterface({
       <div className="border-t dark:border-[#333] p-2 px-3 bg-white dark:bg-[#121212]" aria-label="Button">
         <div className="flex gap-2 items-center bg-gray-100 dark:bg-[#222] rounded-xl px-3 py-2 border dark:border-[#333] focus-within:ring-2 focus-within:ring-blue-500/50 focus-within:border-blue-500 transition-all" aria-label="Button">
           <input
-          aria-label='text-input'
+            aria-label='text-input'
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -1774,7 +1808,7 @@ interface TranscriptViewProps {
 
 function TranscriptView({
   transcript,
-   speakers = EMPTY_SPEAKERS
+  speakers = EMPTY_SPEAKERS
 }: TranscriptViewProps) {
 
   // Handle all possible transcript formats
@@ -2220,7 +2254,7 @@ function SummaryView({
   meetingId,
   summary,
   actionItems = EMPTY_ACTION_ITEMS,
-  keyPoints = EMPTY_KEY_POINTS, 
+  keyPoints = EMPTY_KEY_POINTS,
   onRegenerate,
 }: SummaryViewProps) {
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -2278,6 +2312,7 @@ function SummaryView({
             </>
           )}
         </button> */}
+
       </div>
 
       {/* Summary Section */}

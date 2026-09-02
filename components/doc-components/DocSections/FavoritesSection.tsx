@@ -228,7 +228,8 @@ export default function FavoritesSection({ favorites, onRemove }: Props) {
                 {page.title}
               </span>
               <span className="dark:text-[#6E6E6E] text-[#8D8D8D] text-sm truncate block">
-                • in {page.workspace.name}
+                • in 
+                {/* {page.workspace.name} */}
               </span>
             </div>
             <Button

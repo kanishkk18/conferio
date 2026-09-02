@@ -3,7 +3,6 @@
 import dynamic from 'next/dynamic'
 import { Skeleton } from '@/components/ui/skeleton'
 
-// Dynamically import EditorJS to avoid SSR issues
 const EditorJS = dynamic(() => import('./Editor/EditorJS'), {
   ssr: false,
   loading: () => (
@@ -39,7 +38,7 @@ interface Page {
 interface EditorProps {
   page: Page
   onUpdate: (updates: Partial<Page>) => void
-  workspaceId: string
+  teamId: string
 }
 
 export default function Editor(props: EditorProps) {

@@ -22,11 +22,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         isTemplate: false,
       },
       include: {
-        workspace: {
-          select: {
-            name: true,
-          },
-        },
         _count: {
           select: {
             favoritedBy: true,

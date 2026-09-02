@@ -1364,8 +1364,12 @@ import {
   ModalTitle
 } from '@/components/ui/animated-modal';
 import { FileTextIcon } from '@/components/ui/file-text';
-import { Image as ImageIcon, X, Upload } from 'lucide-react'
+import { Image as ImageIcon, X, Upload, Paperclip } from 'lucide-react'
 import Image from 'next/image'
+import { AttachExistingFileModal } from '../file-manager/AttachExistingFileModal'
+import { useTeamStore } from 'store/teamStore'
+import { useSyncTeamFromUrl } from 'hooks/useSyncTeamFromUrl'
+import { useRouter } from 'next/router'
 
 
 interface Page {
@@ -1394,6 +1398,7 @@ interface EditorJSProps {
 export default function EditorJS({ page, onUpdate, workspaceId }: EditorJSProps) {
   const editorRef = useRef<any>(null)
   const isInitialized = useRef(false)
+  const router = useRouter()
   const [editor, setEditor] = useState<any>(null)
   const [title, setTitle] = useState(page.title)
   const [isReady, setIsReady] = useState(false)
@@ -1408,6 +1413,13 @@ export default function EditorJS({ page, onUpdate, workspaceId }: EditorJSProps)
   const [showComments, setShowComments] = useState(false)
   const [isUploadingCover, setIsUploadingCover] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+    const [attachModalOpen, setAttachModalOpen] = useState(false);
+  const [selectedPageId, setSelectedPageId] = useState<string>('');
+    const { teamSlug, pageId, currentPageId } = router.query;
+
+  useSyncTeamFromUrl(teamSlug as string | undefined);
+  const { selectedTeam } = useTeamStore();
+  const team = selectedTeam?.slug === teamSlug ? selectedTeam : null;
 
   // Initialize Editor.js (same as before)
   useEffect(() => {
@@ -1883,6 +1895,45 @@ export default function EditorJS({ page, onUpdate, workspaceId }: EditorJSProps)
               <Globe className="size-4 dark:text-[#7B7B7B]" />
               {/* {isPublished ? 'Published' : 'Publish'} */}
             </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={isUploadingCover}
+                  className="text-gray-400 hover:text-white dark:text-[#7B7B7B]"
+                  title="Upload or Attach File"
+                >
+                  <Upload className="size-4 dark:text-[#7B7B7B]" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem
+                  onClick={() => fileInputRef.current?.click()}
+                  className="cursor-pointer flex items-center gap-2"
+                >
+                  <Upload className="size-4" />
+                  <span>Select from computer</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setAttachModalOpen(true)}
+                  className="cursor-pointer flex items-center gap-2"
+                >
+                  <Paperclip className="size-4" />
+                  <span>Attach from Cloud Drive</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <AttachExistingFileModal
+              open={attachModalOpen}
+              onOpenChange={setAttachModalOpen}
+              teamId={team?.id || ''}
+              linkType="PAGE"
+              contextId={page.id}
+              onAttached={() => { toast.success('File attached from Drive successfully'); }}
+            />
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

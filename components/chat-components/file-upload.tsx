@@ -406,7 +406,7 @@ import Image from "next/image";
 interface FileUploadProps {
   onChange: (url?: string) => void;
   value: string;
-  endpoint: "messageFile" | "serverImage";
+  endpoint: "messageFile" | "channelImage"; // was "serverImage"
 }
 
 export function FileUpload({ onChange, value, endpoint }: FileUploadProps) {
@@ -604,7 +604,7 @@ aria-label='Upload file'
   onChange={(e) => {
     if (e.target.files && e.target.files.length > 0 && !isUploading) {
       const files = Array.from(e.target.files);
-      const maxSize = endpoint === "serverImage" ? 4 * 1024 * 1024 : 10 * 1024 * 1024;
+      const maxSize = endpoint === "channelImage" ? 4 * 1024 * 1024 : 10 * 1024 * 1024;
       const maxSizeMB = maxSize / 1024 / 1024;
       
       if (files.length > 10) {
@@ -620,12 +620,12 @@ aria-label='Upload file'
         }
         
         // O(1) lookup with Set.has() instead of O(n) array.includes()
-        const allowedTypes = endpoint === "serverImage" 
+        const allowedTypes = endpoint === "channelImage" 
                   ? new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
                   : new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']);
         
         if (!allowedTypes.has(file.type)) {
-          setError(`"${file.name}" has invalid type. Allowed: ${endpoint === "serverImage" ? 'Images only' : 'Images and PDFs'}`);
+          setError(`"${file.name}" has invalid type. Allowed: ${endpoint === "channelImage" ? 'Images only' : 'Images and PDFs'}`);
           return;
         }
       }
@@ -634,7 +634,7 @@ aria-label='Upload file'
       handleFilesUpload(files);
     }
   }}
-  accept={endpoint === "serverImage" ? "image/*" : "image/*,application/pdf"}
+  accept={endpoint === "channelImage" ? "image/*" : "image/*,application/pdf"}
   disabled={isUploading}
 />
       </label>

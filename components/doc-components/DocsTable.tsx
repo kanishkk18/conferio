@@ -1205,8 +1205,8 @@ interface Meeting {
 
 // WorkspaceData is defined in WorkspaceHome and passed down.
 // We only declare the shape we need here to keep DocsTable self-contained.
-export interface WorkspaceData {
-  workspace: { id: string; name: string; slug: string; description?: string } | null;
+export interface TeamData {
+  team: { id: string; name: string; slug: string; description?: string } | null;
   pages: Page[];
   recentPages: Page[];
   members: { user: { id: string; name: string; email: string; image?: string } }[];
@@ -1251,24 +1251,22 @@ function MeetingStatusBadge({ status }: { status: string }) {
 // via workspaceData — no initial fetch useEffect inside this component.
 // Only notes, reminders, and meetings are lazy-fetched on tab switch.
 
-function DocsTable({ workspaceData }: { workspaceData: WorkspaceData }) {
+function DocsTable({ teamData }: { teamData: TeamData }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { push } = useRouter();
-  const { workspaceId } = router.query;
 
   // ── Destructure shared data from parent ─────────────────────────────────
   const {
-    workspace,
-    recentPages,
     members,
     favorites: parentFavorites,
     assignedToMe: parentAssigned,
     refetchPages,
+    recentPages,
     refetchMembers,
     createNewPage,
     deletePage,
-  } = workspaceData;
+  } = teamData;
 
   // ── Local UI state ───────────────────────────────────────────────────────
   const [visibleColumns, setVisibleColumns] = useState<string[]>([...allColumns]);
@@ -1561,7 +1559,7 @@ function DocsTable({ workspaceData }: { workspaceData: WorkspaceData }) {
                         <AnimateIcon animateOnHover>
                           <TableCell
                             className="font-medium flex gap-2 pl-10 h-0 py-0 text-sm dark:text-[#EEEEEE]"
-                            onClick={() => push(`/workspace/${workspaceId}/page/${p.id}`)}
+                            
                           >
                             <div className="mt-2 !h-3 !w-3">
                               {p.emoji || (
@@ -1886,7 +1884,7 @@ function DocsTable({ workspaceData }: { workspaceData: WorkspaceData }) {
                     <TableRow
                       key={p.id}
                       className="cursor-pointer dark:hover:bg-[#191919]"
-                      onClick={() => push(`/workspace/${workspaceId}/page/${p.id}`)}
+                      onClick={() => push(`/workspace/page/${p.id}`)}
                     >
                       <TableCell className="pl-10 flex items-center gap-2 font-medium text-sm">
                         {p.emoji ? (
@@ -1939,7 +1937,7 @@ function DocsTable({ workspaceData }: { workspaceData: WorkspaceData }) {
                     <TableRow
                       key={fav.id}
                       className="cursor-pointer dark:hover:bg-[#191919]"
-                      onClick={() => push(`/workspace/${workspaceId}/page/${fav.id}`)}
+                      onClick={() => push(`/team/${team?.slug}/docs/${fav.id}`)}
                     >
                       <TableCell className="pl-10 flex items-center gap-2 font-medium text-sm">
                         {fav.emoji ? (
@@ -1950,7 +1948,7 @@ function DocsTable({ workspaceData }: { workspaceData: WorkspaceData }) {
                         {fav.title}
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
-                        {fav.workspace.name}
+                        {/* {fav.workspace.name} */}
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {new Date(fav.favoritedAt).toLocaleDateString()}
@@ -2097,13 +2095,13 @@ function DocsTable({ workspaceData }: { workspaceData: WorkspaceData }) {
       </Modal>
 
       {/* ── Invite Modal ──────────────────────────────────────────────────── */}
-      <InviteModal
+      {/* <InviteModal
         open={showInviteModal}
         onOpenChange={setShowInviteModal}
         workspaceId={workspaceId as string}
         members={members}
         onMembersUpdate={refetchMembers}
-      />
+      /> */}
 
       {/* ── Note Editor Modal ─────────────────────────────────────────────── */}
       <Modal open={isEditorOpen} onOpenChange={setIsEditorOpen}>

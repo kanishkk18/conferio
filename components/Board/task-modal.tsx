@@ -2134,6 +2134,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import { DoubleArrowLeftIcon, DoubleArrowRightIcon } from '@radix-ui/react-icons';
+import { AttachExistingFileModal } from '../file-manager/AttachExistingFileModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -2741,9 +2742,10 @@ interface AttachmentsAccordionProps {
   onUploadComplete: () => void;
   onSetCover: (url: string | null) => void;
   onDeleteAttachment: (id: string) => void;
+  onAttachExisting?: () => void;
 }
 
-function AttachmentsAccordion({ task, boardId, onUploadComplete, onSetCover, onDeleteAttachment }: AttachmentsAccordionProps) {
+function AttachmentsAccordion({ task, boardId, onUploadComplete, onSetCover, onDeleteAttachment, onAttachExisting }: AttachmentsAccordionProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const handleDownloadAll = () => {
@@ -2771,51 +2773,55 @@ function AttachmentsAccordion({ task, boardId, onUploadComplete, onSetCover, onD
           </div>
           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             {task.attachments.length > 0 && (
-              <>
-                {/* View toggle */}
-                <div className="flex items-center border dark:border-white/10 rounded-md overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('grid')}
-                    className={cn(
-                      "p-1.5 transition-colors",
-                      viewMode === 'grid'
-                        ? "bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-200"
-                        : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    )}
-                    title="Grid view"
-                  >
-                    <LayoutGrid className="size-3.5" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('list')}
-                    className={cn(
-                      "p-1.5 transition-colors",
-                      viewMode === 'list'
-                        ? "bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-200"
-                        : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    )}
-                    title="List view"
-                  >
-                    <List className="size-3.5" />
-                  </button>
-                  <button
-                  
+              <div className="flex items-center border dark:border-white/10 rounded-md overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={cn(
+                    "p-1.5 transition-colors",
+                    viewMode === 'grid'
+                      ? "bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-200"
+                      : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  )}
+                  title="Grid view"
+                >
+                  <LayoutGrid className="size-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  className={cn(
+                    "p-1.5 transition-colors",
+                    viewMode === 'list'
+                      ? "bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-200"
+                      : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  )}
+                  title="List view"
+                >
+                  <List className="size-3.5" />
+                </button>
+                <button
                   aria-label="download all attachments"
-                  
                   onClick={handleDownloadAll}
-                  className="h-7 p-1.5 rounded-none text-[12px] text-gray-500 hover:text-gray-700  dark:text-gray-400 dark:hover:text-gray-200 gap-1.5"
+                  className="h-7 p-1.5 rounded-none text-[12px] text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 gap-1.5"
                 >
                   <Download className="size-3.5" />
                 </button>
-                <FileUpload taskId={task.id} type="task" onUploadComplete={onUploadComplete} />
-                </div>
-                {/* Download All */}
-                
-              </>
+              </div>
             )}
-            
+            <FileUpload taskId={task.id} type="task" onUploadComplete={onUploadComplete} />
+            {onAttachExisting && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onAttachExisting}
+                className="h-7 px-2 text-[12px] gap-1"
+              >
+                <Paperclip className="size-3.5" />
+                Attach Drive File
+              </Button>
+            )}
           </div>
         </div>
       </CollapsibleTrigger>
@@ -2987,6 +2993,10 @@ export function TaskModal({ task, boardId, boardMembers, labels, closeModal }: T
   const [month, setMonth] = useState<Date>(date ?? today);
   const [open, setOpen] = useState(false);
 
+
+  const [attachModalOpen, setAttachModalOpen] = useState(false);
+
+
   useEffect(() => {
     if (freshTask) {
       setEditedTask(freshTask);
@@ -3155,7 +3165,7 @@ export function TaskModal({ task, boardId, boardMembers, labels, closeModal }: T
 
   const completedSubtasks = task.subtasks.filter((s: any) => s.isCompleted).length;
   const progress = task.subtasks.length > 0 ? (completedSubtasks / task.subtasks.length) * 100 : 0;
-
+  
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -3173,6 +3183,18 @@ export function TaskModal({ task, boardId, boardMembers, labels, closeModal }: T
               </p>
             </div>
           </div>
+          <AttachExistingFileModal
+            open={attachModalOpen}
+            onOpenChange={setAttachModalOpen}
+            teamId={task.teamId || task.board?.teamId}
+            linkType="TASK"
+            contextId={task.id}
+            onAttached={() => {
+              queryClient.invalidateQueries({ queryKey: ['board', boardId] });
+              queryClient.invalidateQueries({ queryKey: ['task', task.id] });
+            }}
+          />
+
 
           {/* ── Resizable body ── */}
           <ResizablePanelGroup direction="horizontal" className="flex-1 border-none">
@@ -3317,6 +3339,7 @@ export function TaskModal({ task, boardId, boardMembers, labels, closeModal }: T
                           onUploadComplete={() => queryClient.invalidateQueries({ queryKey: ['board', boardId] })}
                           onSetCover={(url) => setCoverImageMutation.mutate(url)}
                           onDeleteAttachment={(id) => deleteAttachmentMutation.mutate(id)}
+                          onAttachExisting={() => setAttachModalOpen(true)}
                         />
 
                       </ResizablePanel>

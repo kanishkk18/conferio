@@ -9,7 +9,6 @@ import { CloudSunIcon, Disc2, FileText, Plus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Sun } from 'lucide-react';
 import { FamilyButtonDemo } from '@/components/ui/multiButton';
-import DashMusic from '../music/dashMusic';
 import { UserTask } from 'interfaces/task';
 import { DashboardTaskList } from '@/components/tasks/dashboard-task-list';
 import Image from 'next/image';
@@ -40,7 +39,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Flag } from 'lucide-react';
-import { RiGatsbyLine, RiNextjsLine, RiReactjsLine } from '@remixicon/react';
 import {
   Modal,
   ModalBody,
@@ -71,7 +69,7 @@ import NoteEditor from '@/components/NoteEditor';
 import { CategoryForm } from '@/components/categories/category-form';
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
-import { Player } from '@/components/music/player';
+
 
 interface TaskProps {
   task: UserTask[];
@@ -101,13 +99,7 @@ interface Reminder {
 }
 
 const Dashboard = () => {
-  const [time, setTime] = useState(new Date());
-  const [location, setLocation] = useState<{
-    latitude: number | null;
-    longitude: number | null;
-  }>({ latitude: null, longitude: null });
   const [date, setDate] = useState<Date | undefined>(new Date());
-  type ForecastDay = { day: string; temp: number };
   const [task, setTask] = useState<UserTask[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [title, setTitle] = useState('');
@@ -118,52 +110,6 @@ const Dashboard = () => {
   const [category, setCategory] = useState<Category | null>(null);
   const isFormValid = title.trim() !== '' && dueTime !== null;
   const router = useRouter();
-
-  const [weather, setWeather] = useState<{
-    temperature: string | number;
-    feelsLike: string | number;
-    high: string | number;
-    low: string | number;
-    condition: string;
-    humidity: string | number;
-    wind: string | number;
-    precipitation: string | number;
-    forecast: ForecastDay[];
-  }>({
-    temperature: '--',
-    feelsLike: '--',
-    high: '--',
-    low: '--',
-    condition: '--',
-    humidity: '--',
-    wind: '--',
-    precipitation: '--',
-    forecast: [],
-  });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setLocation({ latitude, longitude });
-        },
-        (error) => {
-          console.error('Error fetching location: ', error.message);
-          alert('Unable to fetch your location. Please allow location access.');
-        }
-      );
-    } else {
-      alert('Geolocation is not supported by your browser.');
-    }
-  }, []);
 
   const hasFetchedTasks = useRef(false);
   if (!hasFetchedTasks.current) {
@@ -185,74 +131,6 @@ const Dashboard = () => {
     })();
   }
 
-  useEffect(() => {
-    const fetchWeather = async () => {
-      try {
-        if (!location?.latitude || !location?.longitude) {
-          console.log('Waiting for location...');
-          return;
-        }
-
-        const response = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current_weather=true&daily=temperature_2m_max,temperature_2m_min&temperature_unit=celsius&timezone=auto`
-        );
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const data = await response.json();
-
-        const mapWeatherCodeToDescription = (code: number): string => {
-          const codes: { [key: number]: string } = {
-            0: 'Clear sky',
-            1: 'Mainly clear',
-            2: 'Partly cloudy',
-            3: 'Overcast',
-            45: 'Fog',
-            48: 'Fog',
-            51: 'Light drizzle',
-            53: 'Moderate drizzle',
-            55: 'Heavy drizzle',
-            61: 'Slight rain',
-            63: 'Moderate rain',
-            65: 'Heavy rain',
-            71: 'Slight snow',
-            73: 'Moderate snow',
-            75: 'Heavy snow',
-            80: 'Rain showers',
-            81: 'Moderate showers',
-            82: 'Heavy showers',
-            95: 'Thunderstorm',
-            96: 'Thunderstorm with hail',
-          };
-          return codes[code] || 'Unknown';
-        };
-
-        setWeather({
-          temperature: data.current_weather.temperature,
-          feelsLike: data.current_weather.temperature,
-          high: data.daily.temperature_2m_max[0],
-          low: data.daily.temperature_2m_min[0],
-          condition: mapWeatherCodeToDescription(data.current_weather.weathercode),
-          humidity: '--',
-          wind: data.current_weather.windspeed,
-          precipitation: data.current_weather.precipitation ?? 0,
-          forecast: data.daily.temperature_2m_max
-            .slice(0, 5)
-            .map((temp: number, index: number) => ({
-              day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
-                (new Date().getDay() + index) % 7
-              ],
-              temp,
-            })),
-        });
-      } catch (error) {
-        console.error('Weather fetch failed:', error);
-        setWeather((prev) => ({ ...prev, condition: 'Unavailable' }));
-      }
-    };
-
-    fetchWeather();
-  }, [location]);
 
   const handleNewTask = async () => {
     if (!isFormValid) return;
@@ -472,11 +350,29 @@ const Dashboard = () => {
           <div className=" px-10 py-2.5 gap-y-3 h-full max-w-full flex flex-col justify-center items-center">
 
             <div className="w-full">
-              <Player />
-              {/* <DashMusic/> */}
+              <div className="flex flex-col justify-between items-center gap-3 bg-gray-50 dark:bg-neutral-950 px-6 py-3 rounded-[14px] w-full max-w-xl mx-auto shadow-md">
+                <img
+                  className="h-20 w-20 rounded-lg"
+                  src="https://i.scdn.co/image/ab67616d0000b27354e544672baa16145d67612b"
+                  alt="Default Music"
+                />
+                <div className="flex text-center flex-col flex-1">
+                  <p className="text-[16px] font-bold">
+                    No music playing
+                  </p>
+                </div>
+                <Link
+                  href="/music/page"
+                  className="text-sm bg-blue-600 text-white px-4 py-1.5 rounded-md hover:bg-blue-700 transition"
+                >
+                  Play Music
+                </Link>
+              </div>
             </div>
 
-            <FloatingPanelRoot className="flex w-full h-3/3 shadow-md  justify-center dark:border-[#171717] border items-center bg-gray-50 dark:bg-neutral-950 rounded-[14px] flex-col">
+            <ClickCard />
+
+            {/* <FloatingPanelRoot className="flex w-full h-3/3 shadow-md  justify-center dark:border-[#171717] border items-center bg-[#fff] dark:bg-neutral-950 rounded-[14px] flex-col">
               <FloatingPanelTrigger className="bg-transparent h-3/3 dark:bg-transparent py-1 border-none w-full px-6">
                 <div className="flex justify-end items-end text-gray-500 pb-4 -mr-8">
                   <p className="font-medium text-sm">{format(new Date(), 'MMMM d, yyyy')}</p>
@@ -555,7 +451,7 @@ const Dashboard = () => {
                   </p>
                 </FloatingPanelFooter>
               </FloatingPanelContent>
-            </FloatingPanelRoot>
+            </FloatingPanelRoot> */}
 
             {/* <div className="relative group flex w-full h-2/3 shadow-md !gap-y-7 justify-center items-start px-6 bg-gray-50 dark:bg-neutral-950 pt-4 rounded-[14px] flex-col">
               <h1 className="lg:text-[20px] md:text-[20px] text-[16px] leading-tight font-sans font-semibold">
@@ -1093,3 +989,322 @@ function NotesContent({
 
 
 
+export function ClickCard() {
+  const [time, setTime] = useState<Date | null>(() =>
+    typeof window !== 'undefined' ? new Date() : null
+  );
+  const [location, setLocation] = useState<{
+    latitude: number | null;
+    longitude: number | null;
+  }>({ latitude: null, longitude: null });
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  type ForecastDay = { day: string; temp: number };
+  const [dueTime, setDueTime] = useState<Dayjs | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+
+  const [weather, setWeather] = useState<{
+    temperature: string | number;
+    feelsLike: string | number;
+    high: string | number;
+    low: string | number;
+    condition: string;
+    humidity: string | number;
+    wind: string | number;
+    precipitation: string | number;
+    forecast: ForecastDay[];
+  }>({
+    temperature: '--',
+    feelsLike: '--',
+    high: '--',
+    low: '--',
+    condition: '--',
+    humidity: '--',
+    wind: '--',
+    precipitation: '--',
+    forecast: [],
+  });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setLocation({ latitude, longitude });
+        },
+        (error) => {
+          console.error('Error fetching location: ', error.message);
+          alert('Unable to fetch your location. Please allow location access.');
+        }
+      );
+    } else {
+      alert('Geolocation is not supported by your browser.');
+    }
+  }, []);
+
+
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        if (!location?.latitude || !location?.longitude) {
+          console.log('Waiting for location...');
+          return;
+        }
+
+        const response = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current_weather=true&daily=temperature_2m_max,temperature_2m_min&temperature_unit=celsius&timezone=auto`
+        );
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+
+        const mapWeatherCodeToDescription = (code: number): string => {
+          const codes: { [key: number]: string } = {
+            0: 'Clear sky',
+            1: 'Mainly clear',
+            2: 'Partly cloudy',
+            3: 'Overcast',
+            45: 'Fog',
+            48: 'Fog',
+            51: 'Light drizzle',
+            53: 'Moderate drizzle',
+            55: 'Heavy drizzle',
+            61: 'Slight rain',
+            63: 'Moderate rain',
+            65: 'Heavy rain',
+            71: 'Slight snow',
+            73: 'Moderate snow',
+            75: 'Heavy snow',
+            80: 'Rain showers',
+            81: 'Moderate showers',
+            82: 'Heavy showers',
+            95: 'Thunderstorm',
+            96: 'Thunderstorm with hail',
+          };
+          return codes[code] || 'Unknown';
+        };
+
+        setWeather({
+          temperature: data.current_weather.temperature,
+          feelsLike: data.current_weather.temperature,
+          high: data.daily.temperature_2m_max[0],
+          low: data.daily.temperature_2m_min[0],
+          condition: mapWeatherCodeToDescription(data.current_weather.weathercode),
+          humidity: '--',
+          wind: data.current_weather.windspeed,
+          precipitation: data.current_weather.precipitation ?? 0,
+          forecast: data.daily.temperature_2m_max
+            .slice(0, 5)
+            .map((temp: number, index: number) => ({
+              day: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
+                (new Date().getDay() + index) % 7
+              ],
+              temp,
+            })),
+        });
+      } catch (error) {
+        console.error('Weather fetch failed:', error);
+        setWeather((prev) => ({ ...prev, condition: 'Unavailable' }));
+      }
+    };
+
+    fetchWeather();
+  }, [location]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  if (!time) {
+    return (
+      <div className="w-full max-w-md h-48 bg-gray-100/50 rounded-3xl animate-pulse" />
+    );
+  }
+
+  // Calculate clock hand degrees
+  const seconds = time.getSeconds();
+  const minutes = time.getMinutes();
+  const hours = time.getHours();
+  const secondDegrees = (seconds / 60) * 360;
+  const minuteDegrees = ((minutes + seconds / 60) / 60) * 360;
+  const hourDegrees = (((hours % 12) + minutes / 60) / 12) * 360;
+
+  // Format time (4pm style)
+  const formattedTime = time.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).toLowerCase().replace(' ', '');
+
+  // Format date (Wed, 17th July style)
+  const dayName = time.toLocaleDateString('en-US', { weekday: 'short' });
+  const dayNum = time.getDate();
+  const monthName = time.toLocaleDateString('en-US', { month: 'long' });
+
+  const getOrdinalSuffix = (n: number) => {
+    if (n > 3 && n < 21) return 'th';
+    switch (n % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
+  };
+
+  const formattedDate = `${dayName}, ${dayNum}${getOrdinalSuffix(dayNum)} ${monthName}`;
+
+  return (
+    <>
+      <FloatingPanelRoot className="flex w-full h-3/3 !shadow-md justify-center dark:border-[#171717] border items-center bg-[#fff] dark:bg-neutral-950 rounded-[14px] flex-col !py-2">
+        <FloatingPanelTrigger className="bg-transparent h-3/3 dark:bg-transparent py-1 border-none w-full px-6">
+          <div className="flex justify-center items-center gap-3">
+            <div className="relative size-32">
+              {/* Clock Face */}
+              <div className="absolute inset-0 rounded-full ">
+                {/* Clock Markers */}
+                {[...Array(12)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute w-0.5 h-1.5 bg-gray-300 rounded-full origin-bottom"
+                    style={{
+                      left: '50%',
+                      top: '8px',
+                      transform: `translateX(-50%) rotate(${i * 30}deg)`,
+                      transformOrigin: '50% 56px',
+                    }}
+                  />
+                ))}
+
+                {/* Hour Markers (3, 6, 9, 12) */}
+                {[0, 3, 6, 9].map((hour) => (
+                  <div
+                    key={hour}
+                    className="absolute w-0.5 h-1.5 bg-gray-400 rounded-full origin-bottom"
+                    style={{
+                      left: '50%',
+                      top: '6px',
+                      transform: `translateX(-50%) rotate(${hour * 30}deg)`,
+                      transformOrigin: '50% 58px',
+                    }}
+                  />
+                ))}
+
+                {/* Center Dot */}
+                <div className="absolute top-1/2 left-1/2 size-2 bg-gray-800 rounded-full -translate-x-1/2 -translate-y-1/2 z-20 shadow-sm" />
+
+                {/* Hour Hand */}
+                <div
+                  className="absolute top-1/2 left-1/2 w-1 h-[33px] bg-gray-800 rounded-full origin-bottom -translate-x-1/2 -translate-y-full shadow-sm z-10"
+                  style={{ transform: `translateX(-50%) translateY(-100%) rotate(${hourDegrees}deg)` }}
+                />
+
+                {/* Minute Hand */}
+                <div
+                  className="absolute top-1/2 left-1/2 w-0.5 h-11 bg-gray-600 rounded-full origin-bottom -translate-x-1/2 -translate-y-full shadow-sm z-10"
+                  style={{ transform: `translateX(-50%) translateY(-100%) rotate(${minuteDegrees}deg)` }}
+                />
+
+                {/* Second Hand (Subtle) */}
+                <div
+                  className="absolute top-1/2 left-1/2 w-px h-12 bg-gray-400/60 rounded-full origin-bottom -translate-x-1/2 -translate-y-full z-10"
+                  style={{ transform: `translateX(-50%) translateY(-100%) rotate(${secondDegrees}deg)` }}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col justify-end items-start gap-2">
+              <p className="bg-blue-200 text-blue-600 w-fit px-2 rounded-xl ml-auto">
+              {weather.temperature}°C
+            </p>
+              <div className="text-[16px] flex text-left justify-start gap-1 items-start font-sans text-gray-700 dark:text-white font-semibold">
+                <span className="text-left flex justify-start gap-2 items-start">
+                  <CloudSunIcon className="text-yellow-400 " />
+                </span>
+                <div className="flex gap-3 justify-center items-center">
+                  {/* <p className="font-normal text-md">Feels like</p> */}
+                  <span className="font-bold text-neutral-500">
+                    {(weather.condition || 'Loading...').slice(0, 12)}
+                  </span>
+                </div>
+              </div>
+              <div className="flex gap-y-1 flex-col justify-between items-start">
+                <h1 className="lg:text-[22px] md:text-[22px] text-[16px] font-sans font-semibold">
+                  {time.toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </h1>
+              
+                <div className="flex justify-start items-start text-gray-500 ">
+                  <p className="font-medium text-sm">{format(new Date(), 'EE, d MMMM')}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </FloatingPanelTrigger>
+
+        <FloatingPanelContent className="-mt-32 -ml-14 px-6 min-w-2xl border dark:bg-[#111]">
+          <FloatingPanelHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Sun className="size-8 text-yellow-400 mr-2" />
+                <h1 className="font-semibold text-lg pr-4">Todays Weather</h1>
+              </div>
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                {weather.temperature}°C
+              </Badge>
+            </div>
+          </FloatingPanelHeader>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <p className="text-2xl font-bold">{weather.temperature}°C</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Feels like {weather.feelsLike}°C
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="font-medium">{weather.condition}</p>
+              <FloatingPanelBody>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  High {weather.high}°C / Low {weather.low}°C
+                </p>
+              </FloatingPanelBody>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <h4 className="font-medium">5-Day Forecast</h4>
+            {weather.forecast.map((day, index) => (
+              <div key={`${index}-${day.day}`} className="flex justify-between items-center">
+                <span>{day.day}</span>
+                <div className="flex items-center">
+                  <Sun className="size-4 text-yellow-400 mr-2" />
+                  <span>{day.temp}°C</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <FloatingPanelFooter>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Last updated:{' '}
+              {time.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </p>
+          </FloatingPanelFooter>
+        </FloatingPanelContent>
+      </FloatingPanelRoot>
+    </>
+  );
+}

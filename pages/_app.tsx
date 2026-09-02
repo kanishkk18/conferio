@@ -11,7 +11,6 @@ import { AccountLayout } from '@/components/layouts';
 import { ThemeProvider } from '@/components/ui/ThemeProvider';
 import QueryProvider from 'contexts/query-provider';
 import { NuqsAdapter } from 'nuqs/adapters/next/pages';
-import MusicProvider from '@/components/music/music-provider';
 import { NextContext } from 'hooks/use-context';
 import { SocketProvider } from '@/components/chat-components/providers/socket-provider';
 import { useRouter } from "next/router";
@@ -22,22 +21,21 @@ import { NotificationToastContainer } from "../components/notifications/Notifica
 import GlobalCallOverlay from '@/components/calls/GlobalCallOverlay';
 import { ScreenShareProvider } from 'contexts/ScreenShareContext';
 import { ScreenShareConsentModal } from '@/components/screenshare/ConsentModal';
-import { useBroadcastLocation } from 'hooks/useUserLocation';
+// import { useBroadcastLocation } from 'hooks/useUserLocation';
 import 'ldrs/react/LineSpinner.css'
 import 'styles/whiteboard.css'
-// import ConferioAI from '@/components/ai/ConferioAI';
+import ConferioAI from '@/components/ai/ConferioAI';
 import { RecordingProvider } from 'contexts/RecordingContext';
 import { UploadPopup } from '@/components/clips/UploadPopup';
-import { MusicLayout } from '@/components/music/music-layout';
 import { useScreenTime } from 'hooks/useScreenTime';
-import { IntroDisclosureDemo } from '@/components/ui/IntroDisclosureDemo';
+// import { IntroDisclosureDemo } from '@/components/ui/IntroDisclosureDemo';
 import { useSyncTeamFromUrl } from 'hooks/useSyncTeamFromUrl';
 
 
-function LocationBroadcaster() {
-  useBroadcastLocation();
-  return null;
-}
+// function LocationBroadcaster() {
+//   useBroadcastLocation();
+//   return null;
+// }
 
 function TeamSyncWrapper({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -54,15 +52,6 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
   const router = useRouter();
   const isMobile = useIsMobile();
    const isMusicRoute = router.pathname.startsWith("/music");
-
-   const content = isMusicRoute ? (
-      <MusicLayout>
-       <Component {...pageProps} />
-     </MusicLayout>
-   ) : (
-     <Component {...pageProps} />
-   );
-
 
   // Add mixpanel
   useEffect(() => {
@@ -101,17 +90,15 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
               disableTransitionOnChange>
               <NotificationProvider>
                 <ScreenShareProvider>
-                    <MusicProvider>
+                    
                       <SocketProvider>
                         <CallProvider>
-                          <RecordingProvider>
-                                                        <TeamSyncWrapper> 
-
+                        <RecordingProvider>
+                        <TeamSyncWrapper> 
                           <NotificationToastContainer />
-                          <LocationBroadcaster />
+                          {/* <LocationBroadcaster /> */}
                           <GlobalCallOverlay />
-                        
-                          {getLayout(content)}
+                          {getLayout(<Component {...pageProps} />)}
                           <ScreenShareConsentModal />
                           <Toaster toastOptions={{ duration: 3000 }} />
                           <UploadPopup />
@@ -121,7 +108,7 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
                         </RecordingProvider>
                         </CallProvider>
                       </SocketProvider>
-                    </MusicProvider>
+                  
                 </ScreenShareProvider>
               </NotificationProvider>
             </ThemeProvider>

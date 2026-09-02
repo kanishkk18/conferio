@@ -149,26 +149,25 @@ import { Loading, Error } from '@/components/shared';
 import useTeams from 'hooks/useTeams';
 import MemberChatCards from './memberchatcards';
 import ChatConversationInterface from './chatconversationinterface';
-import { NavigationSidebar } from "@/components/chat-components/navigation/navigation-sidebar";
-import { ServerSidebar } from "@/components/chat-components/server/server-sidebar";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import ThinSidebar from '@/components/ui/thinSidebar';
-import { ConversationSidebar } from './chat-components/server/conversation-sidebar';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { ServerSection } from './chat-components/server/server-section';
+// import { ServerSection } from './chat-components/server/server-section';
+import { ChannelSidebar } from './chat-components/channel/channel-sidebar';
+import { TeamChannelSection } from './chat-components/channel/team-channel-section';
+import Mainsidebar from './ui/mainSideBar';
+import { Header } from './doc-components/Header';
 
 
 interface MembersConversationProps {
   team: Team;
-  serverId: string;
 }
 
-const MembersConversation = ({ serverId, team }: MembersConversationProps) => {
+const MembersConversation = ({ team }: MembersConversationProps) => {
   const { data: session } = useSession();
   const [selectedMember, setSelectedMember] = useState<TeamMemberWithUser | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -221,26 +220,23 @@ const MembersConversation = ({ serverId, team }: MembersConversationProps) => {
   return (
     <>
       <ResizablePanelGroup direction="horizontal" className="max-h-screen min-h-screen w-screen dark:bg-black">
-        <ThinSidebar />
-        <ResizablePanel defaultSize={5} minSize={4.5} maxSize={4.5} className="dark:bg-black">
-          <NavigationSidebar />
-        </ResizablePanel>
+        <Mainsidebar/>
         <ResizableHandle className="bg-transparent" />
-
-        <ResizablePanel defaultSize={22} minSize={18} maxSize={26} className="rounded-tl-2xl border dark:border-neutral-800 mt-6">
+ {/* <Header/> */}
+        <ResizablePanel defaultSize={22} minSize={18} maxSize={26} className="rounded-tl-2xl border dark:border-neutral-800">
+       
           <div className="flex flex-col overflow-y-auto gap-y-4 items-center justify-center">
-            <ServerSidebar serverId={serverId} />
-
+        <ChannelSidebar teamSlug={team.slug} />
             <Accordion type="single" collapsible defaultValue="item-1" className='w-full px-3'>
               <AccordionItem value="item-1">
                 <AccordionTrigger className="mb-1 px-2 flex justify-center items-center min-w-full">
 
-                  <ServerSection
+                  <TeamChannelSection
                     sectionType="members"
-                    role={role}
+                    role={currentMember?.role}
                     label="Direct Messages"
-                    server={server}
-                  />
+                    members={members}
+                  />`
                 </AccordionTrigger>
                 <AccordionContent className="space-y-[2px] mt-2">
                   {members?.map((member) => (
@@ -260,7 +256,7 @@ const MembersConversation = ({ serverId, team }: MembersConversationProps) => {
           </div>
         </ResizablePanel>
         <ResizableHandle className="bg-transparent" />
-        <ResizablePanel defaultSize={75} className="border-t dark:border-neutral-800 mt-6">
+        <ResizablePanel defaultSize={75} className="border-t dark:border-neutral-800">
           <div className="bg-white dark:bg-[#070709] flex flex-col h-full">
             {/* <ChatHeader
             image={selectedMember?.user.image}

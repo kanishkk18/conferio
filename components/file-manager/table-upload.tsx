@@ -2327,7 +2327,7 @@ interface Team {
   role: string;
 }
 
-function FileManagerContent() {
+function FileManagerContent({ initialTeamId }: { initialTeamId?: string } = {}) {
   const queryClient = useQueryClient();
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -2336,7 +2336,7 @@ function FileManagerContent() {
   const searchParams = useSearchParams();
   const queryType = searchParams.get('type');
   const queryVisibility = searchParams.get('visibility');
-  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  // const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [createFolderDialogOpen, setCreateFolderDialogOpen] = useState(false);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
@@ -2351,6 +2351,8 @@ function FileManagerContent() {
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [verifiedFiles, setVerifiedFiles] = useState<Set<string>>(new Set());
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(initialTeamId || null);
+
 
   const { data: teamsData } = useQuery({
     queryKey: ['my-teams'],
@@ -2369,10 +2371,11 @@ function FileManagerContent() {
   });
 
   useEffect(() => {
+    if (initialTeamId) return; // already set from URL, don't override
     if (teamsData?.teams?.length > 0 && !selectedTeamId) {
       setSelectedTeamId(teamsData.teams[0].id);
     }
-  }, [teamsData, selectedTeamId]);
+  }, [teamsData, selectedTeamId, initialTeamId]);
 
   const { data: filesData } = useQuery({
     queryKey: ['files', activeTab, selectedFolder, searchQuery, selectedTeamId, queryType],
@@ -3714,10 +3717,10 @@ function FileManagerSkeleton() {
   );
 }
 
-export default function EnhancedFileManager() {
+export default function EnhancedFileManager({ initialTeamId }: { initialTeamId?: string } = {}) {
   return (
     <Suspense fallback={<FileManagerSkeleton />}>
-      <FileManagerContent />
+      <FileManagerContent initialTeamId={initialTeamId} />
     </Suspense>
   );
 }

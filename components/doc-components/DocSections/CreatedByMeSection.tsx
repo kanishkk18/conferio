@@ -428,7 +428,7 @@ export default function CreatedAssigned({ createdByMe, assignedToMe, onDeleteCre
                     {page.title}
                   </span>
                   <span className="dark:text-[#6E6E6E] text-[#8D8D8D] text-sm truncate block">
-                    • in {page.workspace.name} • {new Date(page.updatedAt).toLocaleDateString()}
+                    • in  • {new Date(page.updatedAt).toLocaleDateString()}
                   </span>
                 </div>
                 <DropdownMenu>

@@ -320,7 +320,109 @@
 //   }
 // }
 
-// /pages/api/socket/messages/index.ts
+// // /pages/api/socket/messages/index.ts
+// import { NextApiRequest, NextApiResponse } from 'next';
+// import { getServerSession } from 'next-auth';
+// import { authOptions } from '@/lib/auth';
+// import { prisma } from '@/lib/prisma';
+// import { getIO } from '@/lib/socket-store';
+
+// export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+//   if (req.method !== 'POST') {
+//     return res.status(405).json({ error: 'Method not allowed' });
+//   }
+
+//   try {
+//     const session = await getServerSession(req, res, authOptions);
+    
+//     if (!session?.user?.id) {
+//       return res.status(401).json({ error: 'Unauthorized' });
+//     }
+
+//     const { content, channelId, serverId, parentId, fileUrl, tempId } = req.body;
+
+//     if ((!content && !fileUrl) || !channelId || !serverId) {
+//       return res.status(400).json({ error: 'Missing required fields' });
+//     }
+
+//     const member = await prisma.member.findFirst({
+//       where: {
+//         userId: session.user.id,
+//         serverId: serverId,
+//       },
+//       include: {
+//         user: {
+//           select: {
+//             id: true,
+//             name: true,
+//             email: true,
+//             image: true
+//           }
+//         }
+//       }
+//     });
+
+//     if (!member) {
+//       return res.status(403).json({ error: 'Not a member of this server' });
+//     }
+
+//     const message = await prisma.message.create({
+//       data: {
+//         content,
+//         channelId,
+//         fileUrl: fileUrl ?? null,
+//         memberId: member.id,
+//         parentId: parentId || null, // Will work after migration
+//       },
+//       include: {
+//         member: {
+//           include: {
+//             user: {
+//               select: {
+//                 id: true,
+//                 name: true,
+//                 email: true,
+//                 image: true
+//               }
+//             }
+//           }
+//         },
+//         reactions: true,
+//         bookmarks: true,
+//         parent: {
+//       include: {
+//         member: {
+//           include: {
+//             user: { select: { id: true, name: true, image: true } }
+//           }
+//         }
+//       }
+//     },
+//       }
+//     });
+
+//     // Emit socket event
+//     const messageWithOptimisticId = {
+//   ...message,
+//   optimisticId: tempId ?? null,  // ← THIS is the dedup key
+// };
+
+// const io = getIO();
+// if (io) {
+//   io.to(`channel:${channelId}`).emit('new_message', messageWithOptimisticId);
+//   if (parentId) {
+//         io.to(`thread:${parentId}`).emit('thread_reply', message);
+//       }
+// }
+ 
+// return res.status(200).json(messageWithOptimisticId);
+//   } catch (error) {
+//     console.error('[SOCKET_MESSAGES_POST]', error);
+//     return res.status(500).json({ error: 'Internal error' });
+//   }
+// }
+
+
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -334,91 +436,79 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const session = await getServerSession(req, res, authOptions);
-    
-    if (!session?.user?.id) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
+    if (!session?.user?.id) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { content, channelId, serverId, parentId, fileUrl, tempId } = req.body;
+    const { content, channelId, teamId, parentId, fileUrl, tempId } = req.body;
 
-    if ((!content && !fileUrl) || !channelId || !serverId) {
+    if ((!content && !fileUrl) || !channelId || !teamId) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const member = await prisma.member.findFirst({
-      where: {
-        userId: session.user.id,
-        serverId: serverId,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true
-          }
-        }
-      }
+    const channel = await prisma.channel.findFirst({
+      where: { id: channelId, teamId },
     });
+    if (!channel) return res.status(404).json({ error: 'Channel not found' });
 
-    if (!member) {
-      return res.status(403).json({ error: 'Not a member of this server' });
+    const member = await prisma.teamMember.findFirst({
+      where: { userId: session.user.id, teamId },
+      include: {
+        user: { select: { id: true, name: true, email: true, image: true } },
+      },
+    });
+    if (!member) return res.status(403).json({ error: 'Not a member of this team' });
+
+    // If channel is RESTRICTED, verify explicit channel access
+    if (channel.visibility === 'RESTRICTED') {
+      const hasAccess = await prisma.channelMember.findFirst({
+        where: { channelId, teamMemberId: member.id },
+      });
+      if (!hasAccess) return res.status(403).json({ error: 'No access to this channel' });
     }
 
     const message = await prisma.message.create({
       data: {
-        content,
+        content: content ?? '',
         channelId,
         fileUrl: fileUrl ?? null,
-        memberId: member.id,
-        parentId: parentId || null, // Will work after migration
+        senderId: member.id,
+        parentId: parentId || null,
       },
       include: {
-        member: {
+        sender: {
           include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                image: true
-              }
-            }
-          }
+            user: { select: { id: true, name: true, email: true, image: true } },
+          },
         },
         reactions: true,
         bookmarks: true,
         parent: {
-      include: {
-        member: {
           include: {
-            user: { select: { id: true, name: true, image: true } }
-          }
-        }
-      }
-    },
-      }
+            sender: {
+              include: {
+                user: { select: { id: true, name: true, image: true } },
+              },
+            },
+          },
+        },
+      },
     });
 
-    // Emit socket event
     const messageWithOptimisticId = {
-  ...message,
-  optimisticId: tempId ?? null,  // ← THIS is the dedup key
-};
+      ...message,
+      optimisticId: tempId ?? null,
+    };
 
-const io = getIO();
-if (io) {
-  io.to(`channel:${channelId}`).emit('new_message', messageWithOptimisticId);
-  if (parentId) {
+    const io = getIO();
+    if (io) {
+      io.to(`channel:${channelId}`).emit('new_message', messageWithOptimisticId);
+      if (parentId) {
         io.to(`thread:${parentId}`).emit('thread_reply', message);
       }
-}
- 
-return res.status(200).json(messageWithOptimisticId);
+    }
+
+    return res.status(200).json(messageWithOptimisticId);
   } catch (error) {
     console.error('[SOCKET_MESSAGES_POST]', error);
     return res.status(500).json({ error: 'Internal error' });
   }
 }
-

@@ -136,7 +136,6 @@ import CallHistory from '@/components/calls/CallHistory';
 import IncomingCallModal from 'components/calls/IncomingCallModal';
 import { useCall } from 'contexts/CallContext';
 import {Mic, Users, History} from 'lucide-react';
-import { Player } from "../music/player"
 import { RecordingBar } from "../clips/RecordingBar"
 import { useRecording } from "contexts/RecordingContext"
 // import { TimeEntryPopover, useLiveTimer } from '@/components/time-tracking/TimerWidget';
@@ -259,14 +258,6 @@ const Record = () => {
   )
 }
 
-const MusicPlayer = () => {
-  return(
-        <FloatingPanelContent className="!max-w-auto flex h-fit !-ml-40 !bg-transparent !border-none">
-          <Player />
-        </FloatingPanelContent>
-  )
-}
-
 
 export type IslandOption = "record" | "ring" | "timer" | "chat" | "ask" | "notification-bell" | "music" | "plus"
 
@@ -329,8 +320,6 @@ export default function DynamicIsland({
         return ringContent ?? <Calls />
       case "chat":
         return chatContent ?? <Chat />
-      case "music":
-        return <MusicPlayer />
       case "record":
         return <Record />
       case "plus":

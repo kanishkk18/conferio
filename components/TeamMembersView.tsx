@@ -92,7 +92,7 @@ const TeamMembersView = ({ team }: TeamMembersViewProps) => {
       <div className="z-50">
         <Mainsidebar />
       </div>
-      <ScrollArea className="scrollbar-thin2 pb-4 w-full">
+      <ScrollArea className="scrollbar-thin2 w-full">
         <Header />
         <div className="w-full justify-between items-center py-1 px-4 mb-4 border-b dark:border-[#222] flex bg-[#111]">
           <div className="text-2xl font-semibold capitalize flex flex-col ">
