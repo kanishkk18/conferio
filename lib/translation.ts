@@ -1,10 +1,10 @@
 // lib/translation.ts
-import { Translate } from '@google-cloud/translate/v2';
+// import { Translate } from '@google-cloud/translate/v2';
 import { ollama } from './ollama';
 
-const googleTranslate = process.env.GOOGLE_TRANSLATE_API_KEY 
-  ? new Translate({ key: process.env.GOOGLE_TRANSLATE_API_KEY })
-  : null;
+// const googleTranslate = process.env.GOOGLE_TRANSLATE_API_KEY 
+//   ? new Translate({ key: process.env.GOOGLE_TRANSLATE_API_KEY })
+//   : null;
 
 export class TranslationService {
   /**
@@ -17,14 +17,14 @@ export class TranslationService {
     if (targetLang === 'auto') return text;
 
     // Try Google first
-    if (googleTranslate) {
-      try {
-        const [translation] = await googleTranslate.translate(text, targetLang);
-        return translation;
-      } catch (error) {
-        console.warn('Google Translate failed, falling back:', error);
-      }
-    }
+    // if (googleTranslate) {
+    //   try {
+    //     const [translation] = await googleTranslate.translate(text, targetLang);
+    //     return translation;
+    //   } catch (error) {
+    //     console.warn('Google Translate failed, falling back:', error);
+    //   }
+    // }
 
     // Fallback: Ollama/Qwen for offline translation
     try {
