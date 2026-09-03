@@ -205,7 +205,7 @@ export function ServerSection({
                   <ModalContent className="!px-0 space-y-5 !pb-0">
                     <div className="pt-4 px-6 flex flex-col gap-2 text-center sm:text-left">
                       <h1 className="text-2xl text-center font-semibold leading-none ">
-                        Create Channel
+                        Create New Channel
                       </h1>
                     </div>
 
